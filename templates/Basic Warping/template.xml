@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<cinder>
+<template name="Warping: Basic" parent="org.libcinder.apptemplates.basicopengl">
+	<requires>nl.cowlumbus.warping</requires>
+	<source replaceContents="true" replaceName="true">src/_TBOX_PREFIX_App.cpp</source>
+	<asset>assets/help.png</asset>
+</template>
+</cinder>

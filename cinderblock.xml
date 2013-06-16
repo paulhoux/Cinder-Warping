@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<cinder>
+<block
+	name="Warping"
+	id="nl.cowlumbus.warping"
+	author="Paul Houx"
+	license="GPL, Commercial"
+	summary="Warping library for Cinder"
+	url="https://github.com/paulhoux/Cinder-Warping"
+	git="git://github.com/paulhoux/Cinder-Warping.git"
+	>
+	<requires>org.libcinder.opencv</requires>
+	<supports os="macosx" />
+	<supports os="msw" />
+	<includePath>include</includePath>
+	<header>include/Warp.h</header>
+	<header>include/WarpBilinear.h</header>
+	<header>include/WarpPerspective.h</header>
+	<header>include/WarpPerspectiveBilinear.h</header>
+	<source>src/Warp.cpp</source>
+	<source>src/WarpBilinear.cpp</source>
+	<source>src/WarpPerspective.cpp</source>
+	<source>src/WarpPerspectiveBilinear.cpp</source>
+</block>
+<template>templates/Basic Warping/template.xml</template>
+</cinder>
