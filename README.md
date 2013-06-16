@@ -4,6 +4,9 @@ Cinder-Warping
 A Cinder block that enables you to easily create editable bi-linear and perspective warps, or a combination of the two.
 
 
+![Preview](https://raw.github.com/paulhoux/Cinder-Warping/master/PREVIEW.jpg)
+
+
 Image warping, as used in this block, is the process of manipulating an image so that it can be projected onto flat or curved surfaces without distortion. There are three types of warps available:
 * **Perspective warp**: performs image correction for projecting onto flat surfaces in case the projector is not horizontally and/or vertically aligned with the wall. Use it to exactly project your content on a rectangular area on a wall or building, regardless of how your projector is setup. For best results, disable any keystone correction on the projector. Then simply drag the four corners of your content where you want them to be on the wall.
 * **Bilinear warp**: inferior to perspective warping on flat surfaces, but allows projecting onto curved surfaces. Simply add control points to the warp and drag them to where you want your content to be. 
