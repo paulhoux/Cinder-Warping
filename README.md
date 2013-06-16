@@ -16,6 +16,15 @@ Cinder's tool for setting up empty projects, TinderBox, has been revamped and no
 Alternatively, you can download the repository as a [ZIP-file](https://github.com/paulhoux/Cinder-Warping/zipball/master) and manually add the files to a "cinder_master\blocks\Warping" folder.
 
 
+
+#####Dependency on OpenCV
+This block relies on Cinder's optional OpenCV block,so make sure you've installed it in Cinder's block folder:
+* Open a command window (or Terminal)
+* Switch to the disk containing the Cinder root folder, e.g.: ```d:```
+* Browse to the Cinder root folder: ```cd path\to\cinder_master```
+* Add the OpenCV block to the blocks folder: ```git clone https://github.com/cinder/Cinder-OpenCV.git blocks/OpenCV```
+
+
 #####Creating a sample application using Tinderbox
 For more information on how to use the block with TinderBox, please follow this link:
 http://libcinder.org/docs/welcome/TinderBox.html
