@@ -22,17 +22,7 @@
 
 #pragma once
 
-// link to the OpenCV libraries (check the version in Cinder's OpenCV block if you get a link error)
-#ifdef CINDER_MSW
-#ifndef _DEBUG
-	#pragma comment(lib, "opencv_core243.lib")
-	#pragma comment(lib, "opencv_imgproc243.lib")
-#else
-	#pragma comment(lib, "opencv_core243d.lib")
-	#pragma comment(lib, "opencv_imgproc243d.lib")
-#endif
-#endif
-
+// requires Cinder's OpenCV block
 #include "CinderOpenCV.h"
 
 #include "Warp.h"
