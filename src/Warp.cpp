@@ -184,7 +184,7 @@ void Warp::selectClosestControlPoint( const WarpList &warps, const Vec2i &positi
 	float	d, distance=10.0e6f;	
 
 	// find warp and distance to closest control point
-	for(WarpConstIter itr=warps.begin();itr!=warps.end();++itr) {
+	for(WarpConstReverseIter itr=warps.rbegin();itr!=warps.rend();++itr) {
 		i = (*itr)->findControlPoint( position, &d );
 
 		if(d < distance) {
