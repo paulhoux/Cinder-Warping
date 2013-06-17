@@ -42,6 +42,10 @@ namespace cinder {
 		class KeyEvent;
 		class MouseEvent;
 	}
+
+	namespace gl {
+		class Texture;
+	}
 }
 
 //
@@ -99,9 +103,14 @@ public:
 	//! reset control points to undistorted image
 	virtual void		reset() = 0;
 	//! setup the warp before drawing its contents
-	virtual void		begin() = 0;
+	//virtual void		begin() = 0;
 	//! restore the warp after drawing
-	virtual void		end() = 0;
+	//virtual void		end() = 0;
+
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::Texture &texture);
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
 
 	//! returns the coordinates of the specified control point
 	virtual ci::Vec2f	getControlPoint(size_t index) const;

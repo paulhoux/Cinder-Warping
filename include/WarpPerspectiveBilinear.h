@@ -33,37 +33,37 @@ class WarpPerspectiveBilinear
 	: public WarpBilinear, public boost::enable_shared_from_this<WarpPerspectiveBilinear>
 {
 public:
-	WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format() );
+	WarpPerspectiveBilinear();
 	~WarpPerspectiveBilinear(void);
 
 	//!
-	ci::XmlTree	toXml() const; // overrides base class
+	ci::XmlTree	toXml() const;
 	//!
-	void		fromXml(const ci::XmlTree &xml); // overrides base class
+	void		fromXml(const ci::XmlTree &xml);
 
-	bool		mouseMove( ci::app::MouseEvent event ); // overrides base class
-	bool		mouseDown( ci::app::MouseEvent event ); // overrides base class
-	bool		mouseDrag( ci::app::MouseEvent event ); // overrides base class
+	bool		mouseMove( ci::app::MouseEvent event );
+	bool		mouseDown( ci::app::MouseEvent event );
+	bool		mouseDrag( ci::app::MouseEvent event );
 
-	bool		keyDown( ci::app::KeyEvent event ); // overrides base class
+	bool		keyDown( ci::app::KeyEvent event );
 
-	bool		resize(); // overrides base class
+	bool		resize();
 
 	//! set the width and height of the content in pixels
-	void		setSize(int w, int h); // overrides base class
+	void		setSize(int w, int h);
 	//! set the width and height of the content in pixels
-	void		setSize(const ci::Vec2i &size); // overrides base class
+	void		setSize(const ci::Vec2i &size);
 
 	//! returns the coordinates of the specified control point
-	ci::Vec2f	getControlPoint(size_t index) const; // overrides base class
+	ci::Vec2f	getControlPoint(size_t index) const;
 	//! sets the coordinates of the specified control point
-	void		setControlPoint(size_t index, const ci::Vec2f &pos); // overrides base class
+	void		setControlPoint(size_t index, const ci::Vec2f &pos);
 	//! moves the specified control point 
-	void		moveControlPoint(size_t index, const ci::Vec2f &shift); // overrides base class
+	void		moveControlPoint(size_t index, const ci::Vec2f &shift);
 	//! select one of the control points
-	void		selectControlPoint(size_t index); // overrides base class
+	void		selectControlPoint(size_t index);
 	//! deselect the selected control point
-	void		deselectControlPoint(); // overrides base class
+	void		deselectControlPoint();
 protected:
 	//! 
 	void		draw(bool controls=true);

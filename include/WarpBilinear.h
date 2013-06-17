@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "cinder/gl/Fbo.h"
 #include "cinder/gl/Vbo.h"
 
 #include "Warp.h"
@@ -38,26 +37,23 @@ class WarpBilinear
 	: public Warp, public boost::enable_shared_from_this<WarpBilinear>
 {
 public:
-	WarpBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
+	//WarpBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
+	WarpBilinear();
 	virtual ~WarpBilinear(void);
 
 	//!
 	virtual ci::XmlTree	toXml() const; // overrides base class
 	//!
 	virtual void		fromXml(const ci::XmlTree &xml); // overrides base class
-
-	//! set the frame buffer format, so you have control over its quality settings
-	void				setFormat( const ci::gl::Fbo::Format &format );
 	//!
 	void				setLinear( bool enabled=true ) { mIsLinear=enabled; mIsDirty=true; };
 	void				setCurved( bool enabled=true ) { mIsLinear=!enabled; mIsDirty=true; };
 
 	//! reset control points to undistorted image
-	virtual void		reset(); // overrides base class
-	//! setup the warp before drawing its contents
-	virtual void		begin(); // overrides base class
-	//! restore the warp after drawing
-	virtual void		end(); // overrides base class
+	virtual void		reset(); 
+
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
 
 	//! set the number of horizontal control points for this warp 
 	void				setNumControlX(int n);
@@ -67,7 +63,7 @@ public:
 	void				flipVertical(bool enabled=true) { mFlipVertical=enabled; mIsDirty=true; create(); };
 	void				setNormalizedTexCoords(bool enabled=true) { mIsNormalized=enabled; mIsDirty=true; create(); };
 
-	virtual bool		keyDown( ci::app::KeyEvent event ); // overrides base class
+	virtual bool		keyDown( ci::app::KeyEvent event ); 
 protected:
 	//! draws the warp as a mesh, allowing you to use your own texture instead of the FBO
 	virtual void		draw(bool controls=true);
@@ -87,11 +83,7 @@ private:
 	//! Greatest common divisor using Euclidian algorithm (from: http://en.wikipedia.org/wiki/Greatest_common_divisor)
 	int				gcd(int a, int b) const { if(b==0) return a; else return gcd(b, a%b); };
 protected:
-	ci::gl::Fbo				mFbo;
 	ci::gl::VboMesh			mVboMesh;
-
-	//
-	ci::gl::Fbo::Format		mFboFormat;
 
 	//! linear or curved interpolation
 	bool					mIsLinear;

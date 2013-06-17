@@ -24,6 +24,7 @@
 
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
+#include "cinder/gl/Texture.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -124,15 +125,15 @@ void WarpPerspective::reset()
 	mIsDirty = true;
 }
 
-void WarpPerspective::begin()
+void WarpPerspective::draw(const gl::Texture &texture, const Area &srcArea, const Rectf &destRect)
 {
+	// TODO: clip against bounds
+
 	gl::pushModelView();
 	gl::multModelView( getTransform() );
-}
 
-void WarpPerspective::end()
-{
-	// restore warp
+	gl::draw( texture, srcArea, destRect );
+
 	gl::popModelView();	
 
 	// draw interface

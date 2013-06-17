@@ -24,18 +24,19 @@
 
 #include "cinder/Xml.h"
 #include "cinder/app/AppBasic.h"
+#include "cinder/gl/Texture.h"
 
 using namespace ci;
 using namespace ci::app;
 
 namespace ph { namespace warping {
 
-WarpBilinear::WarpBilinear(const gl::Fbo::Format &format)
-	: Warp(BILINEAR), mFboFormat(format)
+WarpBilinear::WarpBilinear()
+	: Warp(BILINEAR)
 {
 	mIsLinear = false;
 	mIsNormalized = true;
-	mFlipVertical = true;
+	mFlipVertical = false;
 	mIsAdaptive = false;
 
 	mResolution  = 16; // higher value is coarser mesh
@@ -74,14 +75,6 @@ void WarpBilinear::fromXml(const XmlTree &xml)
 	mIsAdaptive = xml.getAttributeValue<bool>("adaptive", false);
 }
 
-void WarpBilinear::setFormat(const gl::Fbo::Format &format)
-{
-	mFboFormat = format;
-
-	// invalidate current frame buffer
-	mFbo = gl::Fbo();
-}
-
 void WarpBilinear::reset()
 {
 	mPoints.clear();
@@ -94,46 +87,16 @@ void WarpBilinear::reset()
 	mIsDirty = true;
 }
 
-void WarpBilinear::begin()
+void WarpBilinear::draw(const gl::Texture &texture, const Area &srcArea, const Rectf &destRect)
 {
-	create();
+	// TODO: clip against bounds
 
-	if(mFbo) {
-		// bind the frame buffer so we can draw to the FBO
-		mFbo.bindFramebuffer();
+	gl::SaveTextureBindState state( texture.getTarget() );
 
-		// store current viewport and set viewport to frame buffer size
-		glPushAttrib(GL_VIEWPORT_BIT);
-		gl::setViewport( mFbo.getBounds() );
+	// TODO: adjust texture coordinates using vertex shader
 
-		// set window matrices
-		gl::pushMatrices();
-		gl::setMatricesWindow( mWidth, mHeight );
-	}
-}
-
-void WarpBilinear::end()
-{
-	if(mFbo) {
-		// restore matrices
-		gl::popMatrices();
-
-		// restore viewport
-		glPopAttrib();
-
-		// unbind frame buffer
-		mFbo.unbindFramebuffer();
-
-		// enable and bind frame buffer texture
-		glEnable( GL_TEXTURE_2D );
-		mFbo.bindTexture();
-
-		// draw mesh
-		draw();
-
-		// unbind frame buffer texture
-		mFbo.unbindTexture();
-	}
+	texture.enableAndBind();
+	draw();
 }
 
 void WarpBilinear::draw(bool controls)
@@ -293,23 +256,6 @@ bool WarpBilinear::keyDown(KeyEvent event)
 
 void WarpBilinear::create()
 {
-	// check if the FBO was created and is of the correct size
-	if(!mFbo) {
-		try { mFbo = gl::Fbo(mWidth, mHeight, mFboFormat); }
-		catch(...){
-			// try creating Fbo with default format settings
-			try { mFbo = gl::Fbo(mWidth, mHeight); }
-			catch(...){ return; }
-		}
-	} else if(mFbo.getWidth() != mWidth || mFbo.getHeight() != mHeight) {
-		try { mFbo = gl::Fbo(mWidth, mHeight, mFboFormat); }
-		catch(...){ 
-			// try creating Fbo with default format settings
-			try { mFbo = gl::Fbo(mWidth, mHeight); }
-			catch(...){ return; }
-		}
-	}
-
 	if(mIsDirty) {
 		if(mIsAdaptive) {
 			// determine a suitable mesh resolution based on width/height of the window
