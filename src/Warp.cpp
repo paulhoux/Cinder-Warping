@@ -209,6 +209,12 @@ void Warp::selectClosestControlPoint( const WarpList &warps, const Vec2i &positi
 	}
 }
 
+void Warp::setSize( const WarpList &warps, const Vec2i &size )
+{
+	for(WarpConstIter itr=warps.begin();itr!=warps.end();++itr) 
+		(*itr)->setSize(size);
+}
+
 WarpList Warp::readSettings( const DataSourceRef &source  )
 {
 	XmlTree		doc;

@@ -103,9 +103,9 @@ public:
 	//! reset control points to undistorted image
 	virtual void		reset() = 0;
 	//! setup the warp before drawing its contents
-	//virtual void		begin() = 0;
+	virtual void		begin() = 0;
 	//! restore the warp after drawing
-	//virtual void		end() = 0;
+	virtual void		end() = 0;
 
 	//! draws a warped texture
 	virtual void		draw(const ci::gl::Texture &texture);
@@ -124,6 +124,10 @@ public:
 	virtual void		deselectControlPoint();
 	//! returns the index of the closest control point, as well as the distance in pixels
 	virtual size_t		findControlPoint(const ci::Vec2f &pos, float *distance) const ;
+
+	//! set the width and height in pixels of the content of all warps
+	static void			setSize(const WarpList &warps, int w, int h) { setSize( warps, ci::Vec2i(w, h) ); }
+	static void			setSize(const WarpList &warps, const ci::Vec2i &size);
 
 	//! checks all warps and selects the closest control point
 	static void			selectClosestControlPoint( const WarpList &warps, const ci::Vec2i &position );		

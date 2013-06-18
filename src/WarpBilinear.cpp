@@ -26,6 +26,33 @@
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/Texture.h"
 
+// Cinder does not provide comparison operators on gl::Fbo::Format
+
+bool operator==( const ci::gl::Fbo::Format& a, const ci::gl::Fbo::Format& b )
+{
+	if( a.getTarget() != b.getTarget() ) return false;
+	if( a.getColorInternalFormat() != b.getColorInternalFormat() ) return false;
+	if( a.getDepthInternalFormat() != b.getDepthInternalFormat() ) return false;
+	if( a.hasColorBuffer() != b.hasColorBuffer() ) return false;
+	if( a.getNumColorBuffers() != b.getNumColorBuffers() ) return false;
+	if( a.hasDepthBuffer() != b.hasDepthBuffer() ) return false;
+	if( a.hasDepthBufferTexture() != b.hasDepthBufferTexture() ) return false;
+	if( a.getSamples() != b.getSamples() ) return false;
+	if( a.getCoverageSamples() != b.getCoverageSamples() ) return false;
+	if( a.hasMipMapping() != b.hasMipMapping() ) return false;
+
+	// mWrapS, mWrapT, mMinFilter, mMagFilter are not accessible
+
+	return true;
+}
+
+bool operator!=(const ci::gl::Fbo::Format& a, const ci::gl::Fbo::Format& b )
+{
+    return !(a == b);
+}
+
+//
+
 using namespace ci;
 using namespace ci::app;
 
@@ -75,6 +102,14 @@ void WarpBilinear::fromXml(const XmlTree &xml)
 	mIsAdaptive = xml.getAttributeValue<bool>("adaptive", false);
 }
 
+void WarpBilinear::setFormat(const gl::Fbo::Format &format)
+{
+	mFboFormat = format;
+
+	// invalidate current frame buffer
+	mFbo = gl::Fbo();
+}
+
 void WarpBilinear::reset()
 {
 	mPoints.clear();
@@ -93,10 +128,77 @@ void WarpBilinear::draw(const gl::Texture &texture, const Area &srcArea, const R
 
 	gl::SaveTextureBindState state( texture.getTarget() );
 
-	// TODO: adjust texture coordinates using vertex shader
+	// adjust texture coordinates if needed
+	if( mFlipVertical ) {
+		mFlipVertical = false;
+		mIsDirty = true;
+	}
 
 	texture.enableAndBind();
 	draw();
+}
+
+void WarpBilinear::begin()
+{
+	// adjust texture coordinates if needed
+	if( ! mFlipVertical ) {
+		mFlipVertical = true;
+		mIsDirty = true;
+	}
+
+	create();
+
+	// check if the FBO was created and is of the correct size
+	if(!mFbo) {
+		try { mFbo = gl::Fbo(mWidth, mHeight, mFboFormat); }
+		catch(...){
+			// try creating Fbo with default format settings
+			try { mFbo = gl::Fbo(mWidth, mHeight); }
+			catch(...){ return; }
+		}
+	} else if(mFbo.getWidth() != mWidth || mFbo.getHeight() != mHeight || mFbo.getFormat() != mFboFormat ) {
+		try { mFbo = gl::Fbo(mWidth, mHeight, mFboFormat); }
+		catch(...){ 
+			// try creating Fbo with default format settings
+			try { mFbo = gl::Fbo(mWidth, mHeight); }
+			catch(...){ return; }
+		}
+	}
+
+	// bind the frame buffer so we can draw to the FBO
+	mFbo.bindFramebuffer();
+
+	// store current viewport and set viewport to frame buffer size
+	glPushAttrib(GL_VIEWPORT_BIT);
+	gl::setViewport( mFbo.getBounds() );
+
+	// set window matrices
+	gl::pushMatrices();
+	gl::setMatricesWindow( mWidth, mHeight );
+}
+
+void WarpBilinear::end()
+{
+	if(!mFbo) return;
+
+	// restore matrices
+	gl::popMatrices();
+
+	// restore viewport
+	glPopAttrib();
+
+	// unbind frame buffer
+	mFbo.unbindFramebuffer();
+
+	// enable and bind frame buffer texture
+	glEnable( GL_TEXTURE_2D );
+	mFbo.bindTexture();
+
+	// draw mesh
+	draw();
+
+	// unbind frame buffer texture
+	mFbo.unbindTexture();
 }
 
 void WarpBilinear::draw(bool controls)
@@ -295,8 +397,8 @@ void WarpBilinear::createMesh(int resolutionX, int resolutionY)
 	}
 
 	// only create a new mesh if necessary
-	if(mVboMesh && (mResolutionX == resolutionX) && (mResolutionY == resolutionY))
-		return;
+	//if(mVboMesh && (mResolutionX == resolutionX) && (mResolutionY == resolutionY))
+	//	return;
 
 	//
 	mResolutionX = resolutionX;

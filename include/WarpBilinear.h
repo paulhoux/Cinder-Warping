@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cinder/gl/Fbo.h"
 #include "cinder/gl/Vbo.h"
 
 #include "Warp.h"
@@ -45,12 +46,19 @@ public:
 	virtual ci::XmlTree	toXml() const; // overrides base class
 	//!
 	virtual void		fromXml(const ci::XmlTree &xml); // overrides base class
+
+	//! set the frame buffer format, so you have control over its quality settings
+	void				setFormat( const ci::gl::Fbo::Format &format );
 	//!
 	void				setLinear( bool enabled=true ) { mIsLinear=enabled; mIsDirty=true; };
 	void				setCurved( bool enabled=true ) { mIsLinear=!enabled; mIsDirty=true; };
 
 	//! reset control points to undistorted image
-	virtual void		reset(); 
+	virtual void		reset();
+	//! setup the warp before drawing its contents
+	virtual void		begin();
+	//! restore the warp after drawing
+	virtual void		end();
 
 	//! draws a warped texture
 	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
@@ -83,6 +91,8 @@ private:
 	//! Greatest common divisor using Euclidian algorithm (from: http://en.wikipedia.org/wiki/Greatest_common_divisor)
 	int				gcd(int a, int b) const { if(b==0) return a; else return gcd(b, a%b); };
 protected:
+	ci::gl::Fbo				mFbo;
+	ci::gl::Fbo::Format		mFboFormat;
 	ci::gl::VboMesh			mVboMesh;
 
 	//! linear or curved interpolation

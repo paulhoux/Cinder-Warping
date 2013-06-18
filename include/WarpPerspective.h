@@ -45,6 +45,10 @@ public:
 
 	//! reset control points to undistorted image
 	void			reset();
+	//! setup the warp before drawing its contents
+	void			begin();
+	//! restore the warp after drawing
+	void			end();
 
 	//! draws a warped texture
 	void			draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect);

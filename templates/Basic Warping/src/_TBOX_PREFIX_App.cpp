@@ -52,9 +52,13 @@ public:
 	
 	void keyDown( KeyEvent event );
 	void keyUp( KeyEvent event );
+
+	void updateWindowTitle();
 private:
 	gl::Texture	mImage;
 	WarpList	mWarps;
+
+	bool		mUseBeginEnd;
 };
 
 void _TBOX_PREFIX_App::prepareSettings(Settings *settings)
@@ -64,6 +68,9 @@ void _TBOX_PREFIX_App::prepareSettings(Settings *settings)
 
 void _TBOX_PREFIX_App::setup()
 {
+	mUseBeginEnd = false;
+	updateWindowTitle();
+
 	// 
 	fs::path settings = getAssetPath("") / "warps.xml";
 	if( fs::exists( settings ) )
@@ -78,8 +85,17 @@ void _TBOX_PREFIX_App::setup()
 	}
 
 	// load test image
-	try { mImage = gl::Texture( loadImage( loadAsset("help.png") ) ); }
-	catch( const std::exception &e ) { console() << e.what() << std::endl; }
+	try
+	{ 
+		mImage = gl::Texture( loadImage( loadAsset("help.png") ) ); 
+
+		// adjust the content size of the warps
+		Warp::setSize( mWarps, mImage.getSize() );
+	}
+	catch( const std::exception &e )
+	{
+		console() << e.what() << std::endl;
+	}
 }
 
 void _TBOX_PREFIX_App::shutdown()
@@ -98,16 +114,28 @@ void _TBOX_PREFIX_App::draw()
 	// clear the window
 	gl::clear();
 
-	// iterate over the warps and draw their content
-	for(WarpIter itr=mWarps.begin();itr!=mWarps.end();++itr)
+	if( mImage ) 
 	{
-		(*itr)->begin();
-
-		// draw something
+		// iterate over the warps and draw their content
 		gl::color( Color::white() );
-		if( mImage ) gl::draw( mImage, (*itr)->getBounds() );
-		
-		(*itr)->end();
+		for(WarpConstIter itr=mWarps.begin();itr!=mWarps.end();++itr)
+		{
+			WarpRef warp( *itr );
+
+			// there are two ways you can use the warps:
+			if( ! mUseBeginEnd )
+			{
+				//  a) simply draw a texture on them (ideal for video)
+				warp->draw( mImage );
+			}
+			else
+			{
+				//  b) issue your draw commands between begin() and end() statements
+				warp->begin();
+				gl::draw( mImage, warp->getBounds() );
+				warp->end();
+			}
+		}
 	}
 }
 
@@ -165,6 +193,10 @@ void _TBOX_PREFIX_App::keyDown( KeyEvent event )
 			// toggle warp edit mode
 			Warp::enableEditMode( ! Warp::isEditModeEnabled() );
 			break;
+		case KeyEvent::KEY_SPACE:
+			mUseBeginEnd = !mUseBeginEnd;
+			updateWindowTitle();
+			break;
 		}
 	}
 }
@@ -175,6 +207,22 @@ void _TBOX_PREFIX_App::keyUp( KeyEvent event )
 	{
 		// let your application perform its keyUp handling here
 	}
+}
+
+void _TBOX_PREFIX_App::updateWindowTitle()
+{
+#if defined( CINDER_MSW )
+	std::wstringstream str;
+	str << "Warping Sample - ";
+
+	if(mUseBeginEnd)
+		str << "Using begin() and end()";
+	else
+		str << "Using draw()";
+
+	HWND hWnd = getRenderer()->getHwnd();
+	::SetWindowText( hWnd, str.str().c_str() );
+#endif
 }
 
 CINDER_APP_BASIC( _TBOX_PREFIX_App, RendererGl )

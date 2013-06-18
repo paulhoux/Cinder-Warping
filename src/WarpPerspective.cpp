@@ -140,6 +140,21 @@ void WarpPerspective::draw(const gl::Texture &texture, const Area &srcArea, cons
 	draw();
 }
 
+void WarpPerspective::begin()
+{
+	gl::pushModelView();
+	gl::multModelView( getTransform() );
+}
+
+void WarpPerspective::end()
+{
+	// restore warp
+	gl::popModelView();	
+
+	// draw interface
+	draw();
+}
+
 void WarpPerspective::draw(bool controls)
 {
 	// only draw grid while editing
