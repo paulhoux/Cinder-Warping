@@ -39,6 +39,13 @@ For more information on how to use the block with TinderBox, please follow this 
 https://forum.libcinder.org/#Topic/23286000001617049
 
 
+#####To-Do's
+* Support for partial drawing: ```warp->draw( const gl::Texture &image, const Area &srcRect, const Rectf &destRect );```
+* Support for call-backs or lambda's when iterating over all warps
+* Out-of-the-box support for multiple windows
+* Support for other warp types, e.g. WarpSpherical
+
+
 #####Copyright notice
 Copyright (c) 2010-2013, Paul Houx - All rights reserved.
 This code is intended for use with the Cinder C++ library: http://libcinder.org
