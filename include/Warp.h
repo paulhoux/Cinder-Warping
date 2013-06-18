@@ -108,9 +108,12 @@ public:
 	virtual void		end() = 0;
 
 	//! draws a warped texture
-	virtual void		draw(const ci::gl::Texture &texture);
+	void				draw(const ci::gl::Texture &texture);
 	//! draws a warped texture
-	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
+	virtual void		draw(const ci::gl::Texture &texture, ci::Area &srcArea, ci::Rectf &destRect) = 0;
+
+	//! adjusts both the source area and destination rectangle so that they are clipped against the warp's content
+	bool				clip( ci::Area &srcArea, ci::Rectf &destRect ) const;
 
 	//! returns the coordinates of the specified control point
 	virtual ci::Vec2f	getControlPoint(size_t index) const;

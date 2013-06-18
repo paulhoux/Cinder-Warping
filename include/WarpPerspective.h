@@ -51,7 +51,7 @@ public:
 	void			end();
 
 	//! draws a warped texture
-	void			draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect);
+	void			draw(const ci::gl::Texture &texture, ci::Area &srcArea, ci::Rectf &destRect);
 
 	//! override keyDown method to add additional key handling
 	bool			keyDown( ci::app::KeyEvent event );

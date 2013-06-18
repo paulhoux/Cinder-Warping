@@ -132,7 +132,7 @@ void _TBOX_PREFIX_App::draw()
 			{
 				//  b) issue your draw commands between begin() and end() statements
 				warp->begin();
-				gl::draw( mImage, warp->getBounds() );
+				gl::draw( mImage );
 				warp->end();
 			}
 		}

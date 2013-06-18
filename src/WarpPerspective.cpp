@@ -31,24 +31,21 @@ using namespace ci::app;
 
 namespace ph { namespace warping {
 
-WarpPerspective::WarpPerspective(void)
-	:Warp(PERSPECTIVE)
+WarpPerspective::WarpPerspective(void) :
+	Warp(PERSPECTIVE)
 {
-	//
-	mControlsX = 2;
-	mControlsY = 2;
-
 	mTransform.setToIdentity();
+	mInverted.setToIdentity();
 
 	//
 	mSource[0].x = 0.0f;		
 	mSource[0].y = 0.0f;		
-	mSource[1].x = (float)mWidth;		
+	mSource[1].x = (float) mWidth;		
 	mSource[1].y = 0.0f;		
-	mSource[2].x = (float)mWidth;		
-	mSource[2].y = (float)mHeight;		
+	mSource[2].x = (float) mWidth;		
+	mSource[2].y = (float) mHeight;		
 	mSource[3].x = 0.0f;		
-	mSource[3].y =(float) mHeight;		
+	mSource[3].y = (float) mHeight;		
 
 	//
 	reset();
@@ -125,10 +122,12 @@ void WarpPerspective::reset()
 	mIsDirty = true;
 }
 
-void WarpPerspective::draw(const gl::Texture &texture, const Area &srcArea, const Rectf &destRect)
+void WarpPerspective::draw(const gl::Texture &texture, Area &srcArea, Rectf &destRect)
 {
-	// TODO: clip against bounds
+	// clip against bounds
+	clip( srcArea, destRect );
 
+	// draw texture
 	gl::pushModelView();
 	gl::multModelView( getTransform() );
 

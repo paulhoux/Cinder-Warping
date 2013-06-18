@@ -58,21 +58,18 @@ using namespace ci::app;
 
 namespace ph { namespace warping {
 
-WarpBilinear::WarpBilinear()
-	: Warp(BILINEAR)
+WarpBilinear::WarpBilinear() : 
+	Warp(BILINEAR),
+	mIsLinear(false),
+	mIsAdaptive(false),
+	mX1(0.0f),
+	mY1(0.0f),
+	mX2(1.0f),
+	mY2(1.0f),
+	mResolution(16), // higher value is coarser mesh
+	mResolutionX(0),
+	mResolutionY(0)
 {
-	mIsLinear = false;
-	mIsNormalized = true;
-	mFlipVertical = false;
-	mIsAdaptive = false;
-
-	mResolution  = 16; // higher value is coarser mesh
-	mResolutionX = 0;
-	mResolutionY = 0;
-
-	mControlsX = 2;
-	mControlsY = 2;
-
 	reset();
 }
 
@@ -122,32 +119,30 @@ void WarpBilinear::reset()
 	mIsDirty = true;
 }
 
-void WarpBilinear::draw(const gl::Texture &texture, const Area &srcArea, const Rectf &destRect)
+void WarpBilinear::draw(const gl::Texture &texture, Area &srcArea, Rectf &destRect)
 {
-	// TODO: clip against bounds
-
 	gl::SaveTextureBindState state( texture.getTarget() );
+	
+	// clip against bounds
+	clip( srcArea, destRect );
 
-	// adjust texture coordinates if needed
-	if( mFlipVertical ) {
-		mFlipVertical = false;
-		mIsDirty = true;
-	}
+	// set texture coordinates
+	float w = static_cast<float>( texture.getWidth() );
+	float h = static_cast<float>( texture.getHeight() );
 
+	if( texture.getTarget() == GL_TEXTURE_RECTANGLE_ARB )
+		setTexCoords( (float)srcArea.x1, (float)srcArea.y1, (float)srcArea.x2, (float)srcArea.y2 );
+	else
+		setTexCoords( srcArea.x1 / w, srcArea.y1 / h, srcArea.x2 / w, srcArea.y2 / h );
+
+	// draw
 	texture.enableAndBind();
+
 	draw();
 }
 
 void WarpBilinear::begin()
 {
-	// adjust texture coordinates if needed
-	if( ! mFlipVertical ) {
-		mFlipVertical = true;
-		mIsDirty = true;
-	}
-
-	create();
-
 	// check if the FBO was created and is of the correct size
 	if(!mFbo) {
 		try { mFbo = gl::Fbo(mWidth, mHeight, mFboFormat); }
@@ -190,15 +185,11 @@ void WarpBilinear::end()
 	// unbind frame buffer
 	mFbo.unbindFramebuffer();
 
-	// enable and bind frame buffer texture
-	glEnable( GL_TEXTURE_2D );
-	mFbo.bindTexture();
+	// draw flipped
+	Area srcArea = mFbo.getBounds();
+	int32_t t = srcArea.y1; srcArea.y1 = srcArea.y2; srcArea.y2 = t;
 
-	// draw mesh
-	draw();
-
-	// unbind frame buffer texture
-	mFbo.unbindTexture();
+	draw( mFbo.getTexture(), srcArea, Rectf( getBounds() ) );
 }
 
 void WarpBilinear::draw(bool controls)
@@ -396,10 +387,6 @@ void WarpBilinear::createMesh(int resolutionX, int resolutionY)
 		resolutionY = mControlsY;
 	}
 
-	// only create a new mesh if necessary
-	//if(mVboMesh && (mResolutionX == resolutionX) && (mResolutionY == resolutionY))
-	//	return;
-
 	//
 	mResolutionX = resolutionX;
 	mResolutionY = resolutionY;
@@ -419,9 +406,6 @@ void WarpBilinear::createMesh(int resolutionX, int resolutionY)
 	mVboMesh = gl::VboMesh( numVertices, numIndices, layout, GL_QUADS );
 	if(!mVboMesh) return;
 
-	//
-	Vec2f size = (mIsNormalized) ? Vec2f::one() : Vec2f((float)mWidth, (float)mHeight);
-
 	// buffer static data
 	int i = 0;
 	int j = 0;
@@ -436,15 +420,10 @@ void WarpBilinear::createMesh(int resolutionX, int resolutionY)
 				indices[i++] = (x+1) * resolutionY + (y+1);
 				indices[i++] = (x+0) * resolutionY + (y+1);
 			}
-			// texCoord
-			if(mFlipVertical) {
-				texCoords[j++] = Vec2f( x / (float)(resolutionX-1) * size.x, 
-					(1.0f - y / (float)(resolutionY-1)) * size.y );
-			}
-			else {
-				texCoords[j++] = Vec2f( x / (float)(resolutionX-1) * size.x, 
-					y / (float)(resolutionY-1) * size.y );
-			}
+			// texCoords
+			float tx = lerp<float, float>( mX1, mX2, x / (float)(resolutionX-1) );
+			float ty = lerp<float, float>( mY1, mY2, y / (float)(resolutionY-1) );
+			texCoords[j++] = Vec2f(tx, ty );
 		}
 	}
 	mVboMesh.bufferIndices( indices );
@@ -674,6 +653,17 @@ Rectf WarpBilinear::getMeshBounds() const
 	}
 
 	return Rectf(min * mWindowSize, max * mWindowSize);
+}
+
+void WarpBilinear::setTexCoords( float x1, float y1, float x2, float y2 )
+{
+	mIsDirty |= (x1 != mX1 || y1 != mY1 || x2 != mX2 || y2 != mY2 );
+	if( ! mIsDirty ) return;
+
+	mX1 = x1;
+	mY1 = y1;
+	mX2 = x2;
+	mY2 = y2;
 }
 
 } } // namespace ph::warping

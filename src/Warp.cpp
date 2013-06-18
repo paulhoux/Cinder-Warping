@@ -38,20 +38,17 @@ bool	Warp::sIsEditMode = false;
 double	Warp::sSelectedTime = 0.0;
 Vec2i	Warp::sMouse = Vec2i(0, 0);
 
-Warp::Warp(WarpType type)
-	:mType(type)
+Warp::Warp(WarpType type) :
+	mType(type),
+	mIsDirty(true),
+	mWidth(640),
+	mHeight(480),
+	mBrightness(1.0f),
+	mSelected(-1), // since this is an unsigned int, actual value will be 'MAX_INTEGER'
+	mControlsX(2),
+	mControlsY(2)
 {
-	// 
-	mWidth = 640; 
-	mHeight = 480;
-
-	mWindowSize = Vec2f( float(mWidth), float(mHeight) );
-
-	mBrightness = 1.0f;
-
-	mIsDirty = true;
-
-	mSelected = -1; // since this is an unsigned int, actual value will be 'MAX_INTEGER'
+	mWindowSize = Vec2f( float(mWidth), float(mHeight) );	
 }
 
 Warp::~Warp(void)
@@ -61,6 +58,70 @@ Warp::~Warp(void)
 void Warp::draw(const gl::Texture &texture)
 {
 	draw( texture, texture.getBounds(), Rectf( getBounds() ) );
+}
+
+bool Warp::clip( Area &srcArea, Rectf &destRect ) const
+{
+	bool clipped = false;
+
+	float x1 = destRect.x1 / mWidth;
+	float x2 = destRect.x2 / mWidth;
+	float y1 = destRect.y1 / mHeight;
+	float y2 = destRect.y2 / mHeight;
+
+	if( x1 < 0.0f ) 
+	{
+		destRect.x1 = 0.0f;
+		srcArea.x1 -= static_cast<int32_t>( x1 * srcArea.getWidth() );
+		clipped = true;
+	}
+	else if( x1 > 1.0f )
+	{
+		destRect.x1 = static_cast<float>( mWidth );
+		srcArea.x1 -= static_cast<int32_t>( (1.0f / x1) * srcArea.getWidth() );
+		clipped = true;
+	}
+
+	if( x2 < 0.0f ) 
+	{
+		destRect.x2 = 0.0f;
+		srcArea.x2 -= static_cast<int32_t>( x2 * srcArea.getWidth() );
+		clipped = true;
+	}
+	else if( x2 > 1.0f )
+	{
+		destRect.x2 = static_cast<float>( mWidth );
+		srcArea.x2 -= static_cast<int32_t>( (1.0f / x2) * srcArea.getWidth() );
+		clipped = true;
+	}
+
+	if( y1 < 0.0f ) 
+	{
+		destRect.y1 = 0.0f;
+		srcArea.y1 -= static_cast<int32_t>( y1 * srcArea.getHeight() );
+		clipped = true;
+	}
+	else if( y1 > 1.0f )
+	{
+		destRect.y1 = static_cast<float>( mHeight );
+		srcArea.y1 -= static_cast<int32_t>( (1.0f / y1) * srcArea.getHeight() );
+		clipped = true;
+	}
+
+	if( y2 < 0.0f ) 
+	{
+		destRect.y2 = 0.0f;
+		srcArea.y2 -= static_cast<int32_t>( y2 * srcArea.getHeight() );
+		clipped = true;
+	}
+	else if( y2 > 1.0f )
+	{
+		destRect.y2 = static_cast<float>( mHeight );
+		srcArea.y2 -= static_cast<int32_t>( (1.0f / y2) * srcArea.getHeight() );
+		clipped = true;
+	}
+
+	return clipped;
 }
 
 XmlTree	Warp::toXml() const

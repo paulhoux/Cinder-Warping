@@ -61,15 +61,14 @@ public:
 	virtual void		end();
 
 	//! draws a warped texture
-	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
+	virtual void		draw(const ci::gl::Texture &texture, ci::Area &srcArea, ci::Rectf &destRect); 
 
 	//! set the number of horizontal control points for this warp 
 	void				setNumControlX(int n);
 	//! set the number of vertical control points for this warp
 	void				setNumControlY(int n);
 
-	void				flipVertical(bool enabled=true) { mFlipVertical=enabled; mIsDirty=true; create(); };
-	void				setNormalizedTexCoords(bool enabled=true) { mIsNormalized=enabled; mIsDirty=true; create(); };
+	void				setTexCoords( float x1, float y1, float x2, float y2 );
 
 	virtual bool		keyDown( ci::app::KeyEvent event ); 
 protected:
@@ -98,9 +97,10 @@ protected:
 	//! linear or curved interpolation
 	bool					mIsLinear;
 	//!
-	bool					mIsNormalized;
-	bool					mFlipVertical;
 	bool					mIsAdaptive;
+
+	//! texture coordinates of corners
+	float					mX1, mY1, mX2, mY2;
 
 	//! Determines the detail of the generated mesh. Multiples of 5 seem to work best.
 	int						mResolution;
