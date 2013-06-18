@@ -14,7 +14,7 @@ Image warping, as used in this block, is the process of manipulating an image so
 
 
 #####Adding this block to Cinder
-This block is meant to be used with version 0.8.3 (or higher) of Cinder.
+This block is meant to be used with version 0.8.5 (or higher) of Cinder.
 
 Cinder's tool for setting up empty projects, TinderBox, has been revamped and now supports a neat system for the management of plug-ins called Cinder Blocks. This Warping block supports this new feature. To add this block to your copy of Cinder, so it will be detected automatically by TinderBox:
 * Open a command window (or Terminal)
