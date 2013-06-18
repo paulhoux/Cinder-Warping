@@ -42,6 +42,10 @@ namespace cinder {
 		class KeyEvent;
 		class MouseEvent;
 	}
+
+	namespace gl {
+		class Texture;
+	}
 }
 
 //
@@ -103,6 +107,11 @@ public:
 	//! restore the warp after drawing
 	virtual void		end() = 0;
 
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::Texture &texture);
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
+
 	//! returns the coordinates of the specified control point
 	virtual ci::Vec2f	getControlPoint(size_t index) const;
 	//! sets the coordinates of the specified control point
@@ -115,6 +124,10 @@ public:
 	virtual void		deselectControlPoint();
 	//! returns the index of the closest control point, as well as the distance in pixels
 	virtual size_t		findControlPoint(const ci::Vec2f &pos, float *distance) const ;
+
+	//! set the width and height in pixels of the content of all warps
+	static void			setSize(const WarpList &warps, int w, int h) { setSize( warps, ci::Vec2i(w, h) ); }
+	static void			setSize(const WarpList &warps, const ci::Vec2i &size);
 
 	//! checks all warps and selects the closest control point
 	static void			selectClosestControlPoint( const WarpList &warps, const ci::Vec2i &position );		

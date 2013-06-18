@@ -27,6 +27,7 @@
 
 #include "cinder/Xml.h"
 #include "cinder/app/AppBasic.h"
+#include "cinder/gl/Texture.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -55,6 +56,11 @@ Warp::Warp(WarpType type)
 
 Warp::~Warp(void)
 {
+}
+
+void Warp::draw(const gl::Texture &texture)
+{
+	draw( texture, texture.getBounds(), Rectf( getBounds() ) );
 }
 
 XmlTree	Warp::toXml() const
@@ -201,6 +207,12 @@ void Warp::selectClosestControlPoint( const WarpList &warps, const Vec2i &positi
 		else 
 			(*itr)->deselectControlPoint();
 	}
+}
+
+void Warp::setSize( const WarpList &warps, const Vec2i &size )
+{
+	for(WarpConstIter itr=warps.begin();itr!=warps.end();++itr) 
+		(*itr)->setSize(size);
 }
 
 WarpList Warp::readSettings( const DataSourceRef &source  )

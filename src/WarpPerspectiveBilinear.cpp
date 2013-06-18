@@ -30,8 +30,8 @@ using namespace ci::app;
 
 namespace ph { namespace warping {
 
-WarpPerspectiveBilinear::WarpPerspectiveBilinear(const gl::Fbo::Format &format)
-	: WarpBilinear(format)
+WarpPerspectiveBilinear::WarpPerspectiveBilinear()
+	: WarpBilinear()
 {
 	// change type 
 	mType = PERSPECTIVE_BILINEAR;

@@ -38,7 +38,8 @@ class WarpBilinear
 	: public Warp, public boost::enable_shared_from_this<WarpBilinear>
 {
 public:
-	WarpBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
+	//WarpBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
+	WarpBilinear();
 	virtual ~WarpBilinear(void);
 
 	//!
@@ -53,11 +54,14 @@ public:
 	void				setCurved( bool enabled=true ) { mIsLinear=!enabled; mIsDirty=true; };
 
 	//! reset control points to undistorted image
-	virtual void		reset(); // overrides base class
+	virtual void		reset();
 	//! setup the warp before drawing its contents
-	virtual void		begin(); // overrides base class
+	virtual void		begin();
 	//! restore the warp after drawing
-	virtual void		end(); // overrides base class
+	virtual void		end();
+
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
 
 	//! set the number of horizontal control points for this warp 
 	void				setNumControlX(int n);
@@ -67,7 +71,7 @@ public:
 	void				flipVertical(bool enabled=true) { mFlipVertical=enabled; mIsDirty=true; create(); };
 	void				setNormalizedTexCoords(bool enabled=true) { mIsNormalized=enabled; mIsDirty=true; create(); };
 
-	virtual bool		keyDown( ci::app::KeyEvent event ); // overrides base class
+	virtual bool		keyDown( ci::app::KeyEvent event ); 
 protected:
 	//! draws the warp as a mesh, allowing you to use your own texture instead of the FBO
 	virtual void		draw(bool controls=true);
@@ -88,10 +92,8 @@ private:
 	int				gcd(int a, int b) const { if(b==0) return a; else return gcd(b, a%b); };
 protected:
 	ci::gl::Fbo				mFbo;
-	ci::gl::VboMesh			mVboMesh;
-
-	//
 	ci::gl::Fbo::Format		mFboFormat;
+	ci::gl::VboMesh			mVboMesh;
 
 	//! linear or curved interpolation
 	bool					mIsLinear;
