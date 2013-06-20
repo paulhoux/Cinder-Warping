@@ -19,6 +19,7 @@
 */
 
 #include "cinder/ImageIo.h"
+#include "cinder/Rand.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
@@ -33,9 +34,7 @@ using namespace ph::warping;
 using namespace std;
 
 class _TBOX_PREFIX_App : public AppBasic {
-public:
-	void prepareSettings( Settings *settings );
-	
+public:	
 	void setup();
 	void shutdown();
 	void update();
@@ -57,35 +56,34 @@ private:
 	WarpList	mWarps;
 
 	bool		mUseBeginEnd;
-};
 
-void _TBOX_PREFIX_App::prepareSettings(Settings *settings)
-{
-	settings->setTitle("Warping Sample");
-}
+	Area		mSrcArea;
+};
 
 void _TBOX_PREFIX_App::setup()
 {
 	mUseBeginEnd = false;
 	updateWindowTitle();
 
-	// 
+	// initialize warps
 	fs::path settings = getAssetPath("") / "warps.xml";
 	if( fs::exists( settings ) )
 	{
-		// load warp settings from file
+		// load warp settings from file if one exists
 		mWarps = Warp::readSettings( loadFile( settings ) );
 	}
 	else
 	{
-		// create a warp from scratch
+		// otherwise create a warp from scratch
 		mWarps.push_back( WarpPerspectiveBilinearRef( new WarpPerspectiveBilinear() ) );
 	}
 
 	// load test image
 	try
 	{ 
-		mImage = gl::Texture( loadImage( loadAsset("help.png") ) ); 
+		mImage = gl::Texture( loadImage( loadAsset("help.png") ) );
+
+		mSrcArea = mImage.getBounds();
 
 		// adjust the content size of the warps
 		Warp::setSize( mWarps, mImage.getSize() );
@@ -105,33 +103,42 @@ void _TBOX_PREFIX_App::shutdown()
 
 void _TBOX_PREFIX_App::update()
 {
+	// there is nothing to update
 }
 
 void _TBOX_PREFIX_App::draw()
 {
-	// clear the window
+	// clear the window and set the drawing color to white
 	gl::clear();
+	gl::color( Color::white() );
 
 	if( mImage ) 
 	{
 		// iterate over the warps and draw their content
-		gl::color( Color::white() );
 		for(WarpConstIter itr=mWarps.begin();itr!=mWarps.end();++itr)
 		{
+			// create a readable reference to our warp, to prevent code like this: (*itr)->begin();
 			WarpRef warp( *itr );
 
 			// there are two ways you can use the warps:
-			if( ! mUseBeginEnd )
+			if( mUseBeginEnd )
 			{
-				//  a) simply draw a texture on them (ideal for video)
-				warp->draw( mImage );
+				// a) issue your draw commands between begin() and end() statements
+				warp->begin();
+
+				// in this demo, we want to draw a specific area of our image,
+				// but if you want to draw the whole image, you can simply use: gl::draw( mImage );
+				gl::draw( mImage, mSrcArea, warp->getBounds() );
+
+				warp->end();
 			}
 			else
 			{
-				//  b) issue your draw commands between begin() and end() statements
-				warp->begin();
-				gl::draw( mImage );
-				warp->end();
+				// b) simply draw a texture on them (ideal for video)
+
+				// in this demo, we want to draw a specific area of our image,
+				// but if you want to draw the whole image, you can simply use: warp->draw( mImage );
+				warp->draw( mImage, mSrcArea );
 			}
 		}
 	}
@@ -139,12 +146,13 @@ void _TBOX_PREFIX_App::draw()
 
 void _TBOX_PREFIX_App::resize()
 {
-	// resize the warps
+	// tell the warps our window has been resized, so they properly scale up or down
 	Warp::handleResize( mWarps );
 }
 
 void _TBOX_PREFIX_App::mouseMove( MouseEvent event )
 {
+	// pass this mouse event to the warp editor first
 	if( ! Warp::handleMouseMove( mWarps, event ) )
 	{
 		// let your application perform its mouseMove handling here
@@ -153,6 +161,7 @@ void _TBOX_PREFIX_App::mouseMove( MouseEvent event )
 
 void _TBOX_PREFIX_App::mouseDown( MouseEvent event )
 {
+	// pass this mouse event to the warp editor first
 	if( ! Warp::handleMouseDown( mWarps, event ) )
 	{
 		// let your application perform its mouseDown handling here
@@ -161,6 +170,7 @@ void _TBOX_PREFIX_App::mouseDown( MouseEvent event )
 
 void _TBOX_PREFIX_App::mouseDrag( MouseEvent event )
 {
+	// pass this mouse event to the warp editor first
 	if( ! Warp::handleMouseDrag( mWarps, event ) )
 	{
 		// let your application perform its mouseDrag handling here
@@ -169,6 +179,7 @@ void _TBOX_PREFIX_App::mouseDrag( MouseEvent event )
 
 void _TBOX_PREFIX_App::mouseUp( MouseEvent event )
 {
+	// pass this mouse event to the warp editor first
 	if( ! Warp::handleMouseUp( mWarps, event ) )
 	{
 		// let your application perform its mouseUp handling here
@@ -177,21 +188,39 @@ void _TBOX_PREFIX_App::mouseUp( MouseEvent event )
 
 void _TBOX_PREFIX_App::keyDown( KeyEvent event )
 {
+	// pass this key event to the warp editor first
 	if( ! Warp::handleKeyDown( mWarps, event ) )
 	{
+		// warp editor did not handle the key, so handle it here
 		switch( event.getCode() )
 		{
 		case KeyEvent::KEY_ESCAPE:
+			// quit the application
 			quit();
 			break;
 		case KeyEvent::KEY_f:
+			// toggle full screen
 			setFullScreen( ! isFullScreen() );
 			break;
 		case KeyEvent::KEY_w:
 			// toggle warp edit mode
 			Warp::enableEditMode( ! Warp::isEditModeEnabled() );
 			break;
+		case KeyEvent::KEY_a:
+			// toggle drawing a random region of the image
+			if( mSrcArea.getWidth() != mImage.getWidth() || mSrcArea.getHeight() != mImage.getHeight() )
+				mSrcArea = mImage.getBounds();
+			else
+			{
+				int x1 = Rand::randInt( 0, mImage.getWidth() - 150 );
+				int y1 = Rand::randInt( 0, mImage.getHeight() - 150 );
+				int x2 = Rand::randInt( x1 + 150, mImage.getWidth() );
+				int y2 = Rand::randInt( y1 + 150, mImage.getHeight() );
+				mSrcArea = Area( x1, y1, x2, y2 );
+			}
+			break;
 		case KeyEvent::KEY_SPACE:
+			// toggle drawing mode
 			mUseBeginEnd = !mUseBeginEnd;
 			updateWindowTitle();
 			break;
@@ -201,6 +230,7 @@ void _TBOX_PREFIX_App::keyDown( KeyEvent event )
 
 void _TBOX_PREFIX_App::keyUp( KeyEvent event )
 {
+	// pass this key event to the warp editor first
 	if( ! Warp::handleKeyUp( mWarps, event ) )
 	{
 		// let your application perform its keyUp handling here
@@ -209,18 +239,10 @@ void _TBOX_PREFIX_App::keyUp( KeyEvent event )
 
 void _TBOX_PREFIX_App::updateWindowTitle()
 {
-#if defined( CINDER_MSW )
-	std::wstringstream str;
-	str << "Warping Sample - ";
-
 	if(mUseBeginEnd)
-		str << "Using begin() and end()";
+		getWindow()->setTitle("Warping Sample - Using begin() and end()");
 	else
-		str << "Using draw()";
-
-	HWND hWnd = getRenderer()->getHwnd();
-	::SetWindowText( hWnd, str.str().c_str() );
-#endif
+		getWindow()->setTitle("Warping Sample - Using draw()");
 }
 
 CINDER_APP_BASIC( _TBOX_PREFIX_App, RendererGl )

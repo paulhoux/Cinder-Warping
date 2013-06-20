@@ -58,6 +58,11 @@ void Warp::draw(const gl::Texture &texture)
 	draw( texture, texture.getBounds(), Rectf( getBounds() ) );
 }
 
+void Warp::draw(const gl::Texture &texture, Area &srcArea)
+{
+	draw( texture, srcArea, Rectf( getBounds() ) );
+}
+
 bool Warp::clip( Area &srcArea, Rectf &destRect ) const
 {
 	bool clipped = false;
