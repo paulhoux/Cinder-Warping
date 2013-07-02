@@ -187,7 +187,8 @@ void WarpBilinear::end()
 	Area srcArea = mFbo.getBounds();
 	int32_t t = srcArea.y1; srcArea.y1 = srcArea.y2; srcArea.y2 = t;
 
-	draw( mFbo.getTexture(), srcArea, Rectf( getBounds() ) );
+	Rectf dstRect( getBounds() );
+	draw( mFbo.getTexture(), srcArea, dstRect );
 }
 
 void WarpBilinear::draw(bool controls)
