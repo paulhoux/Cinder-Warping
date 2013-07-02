@@ -223,7 +223,7 @@ void Warp::selectControlPoint(size_t index)
 
 void Warp::deselectControlPoint()
 {
-	mSelected = -1;
+	mSelected = -1; // since this is an unsigned int, actual value will be 'MAX_INTEGER'
 }
 
 size_t Warp::findControlPoint(const Vec2f &pos, float *distance) const
@@ -445,7 +445,7 @@ bool Warp::mouseMove(cinder::app::MouseEvent event)
 bool Warp::mouseDown(cinder::app::MouseEvent event)
 {
 	if(!sIsEditMode) return false;
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if(mSelected >= mPoints.size()) return false;
 
 	// calculate offset by converting control point from normalized to standard screen space
 	Vec2f p = ( getControlPoint( mSelected ) * mWindowSize );
@@ -457,7 +457,7 @@ bool Warp::mouseDown(cinder::app::MouseEvent event)
 bool Warp::mouseDrag(cinder::app::MouseEvent event)
 {
 	if(!sIsEditMode) return false;
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if(mSelected >= mPoints.size()) return false;
 
 	Vec2f m(event.getPos());
 	Vec2f p(m.x - mOffset.x, m.y - mOffset.y);
@@ -488,58 +488,60 @@ bool Warp::keyDown( KeyEvent event )
 	else return false;
 
 	// do not listen to key input if not selected
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if(mSelected >= mPoints.size()) return false;
 
 	switch( event.getCode() ) {
 		case KeyEvent::KEY_TAB:
 			// select the next or previous (+SHIFT) control point
 			if( event.isShiftDown() ) {
-				--mSelected;
-				if(mSelected < 0) mSelected = (int) mPoints.size() - 1;
+				if(mSelected == 0) 
+					mSelected = (int) mPoints.size() - 1;
+				else 
+					--mSelected;
 				selectControlPoint( mSelected );
 			}
 			else { 
 				++mSelected;
-				if(mSelected >= (int) mPoints.size()) mSelected = 0;
+				if(mSelected >= mPoints.size()) mSelected = 0;
 				selectControlPoint( mSelected );
 			}
 			break;
 		case KeyEvent::KEY_UP: {
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			float step = event.isShiftDown() ? 10.0f : 0.5f;
 			mPoints[mSelected].y -= step / mWindowSize.y;
 			mIsDirty = true; }
 			break;
 		case KeyEvent::KEY_DOWN: {
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			float step = event.isShiftDown() ? 10.0f : 0.5f;
 			mPoints[mSelected].y += step / mWindowSize.y;
 			mIsDirty = true; }
 			break;
 		case KeyEvent::KEY_LEFT: {
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			float step = event.isShiftDown() ? 10.0f : 0.5f;
 			mPoints[mSelected].x -= step / mWindowSize.x;
 			mIsDirty = true; }
 			break;
 		case KeyEvent::KEY_RIGHT: {
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			float step = event.isShiftDown() ? 10.0f : 0.5f;
 			mPoints[mSelected].x += step / mWindowSize.x;
 			mIsDirty = true; }
 			break;
 		case KeyEvent::KEY_MINUS:
 		case KeyEvent::KEY_KP_MINUS:
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			mBrightness = math<float>::max(0.0f, mBrightness - 0.01f);
 			break;
 		case KeyEvent::KEY_PLUS:
 		case KeyEvent::KEY_KP_PLUS:
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			mBrightness = math<float>::min(1.0f, mBrightness + 0.01f);
 			break;
 		case KeyEvent::KEY_r:
-			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+			if(mSelected >= mPoints.size()) return false;
 			reset();
 			mIsDirty = true;
 			break;

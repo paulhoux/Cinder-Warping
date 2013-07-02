@@ -243,7 +243,7 @@ bool WarpBilinear::keyDown(KeyEvent event)
 	if( ! isEditModeEnabled() ) return false;
 
 	// do not listen to key input if not selected
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if(mSelected >= mPoints.size()) return false;
 
 	switch( event.getCode() ) {
 		case KeyEvent::KEY_F1:

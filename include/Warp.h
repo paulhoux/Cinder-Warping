@@ -186,7 +186,7 @@ protected:
 
 	float			mBrightness;
 
-	size_t			mSelected;
+	unsigned		mSelected;
 
 	//! Determines the number of horizontal and vertical control points
 	int				mControlsX;
