@@ -108,7 +108,7 @@ bool WarpPerspectiveBilinear::mouseMove( MouseEvent event )
 bool WarpPerspectiveBilinear::mouseDown( MouseEvent event )
 {
 	if( ! isEditModeEnabled() ) return false;
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if( mSelected >= mPoints.size() ) return false;
 
 	// depending on selected control point, let perspective or bilinear warp handle it
 	if( isCorner( mSelected ) ) {
@@ -122,7 +122,7 @@ bool WarpPerspectiveBilinear::mouseDown( MouseEvent event )
 bool WarpPerspectiveBilinear::mouseDrag( MouseEvent event )
 {
 	if( !isEditModeEnabled() ) return false;
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if( mSelected >= mPoints.size() ) return false;
 
 	// depending on selected control point, let perspective or bilinear warp handle it
 	if( isCorner( mSelected ) ) {
@@ -136,7 +136,7 @@ bool WarpPerspectiveBilinear::mouseDrag( MouseEvent event )
 bool WarpPerspectiveBilinear::keyDown(KeyEvent event)
 {
 	if( ! isEditModeEnabled() ) return false;
-	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
+	if( mSelected >= mPoints.size() ) return false;
 
 	switch( event.getCode() ) {
 		case KeyEvent::KEY_UP:
