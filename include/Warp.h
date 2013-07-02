@@ -108,9 +108,9 @@ public:
 	//! draws a warped texture
 	void				draw(const ci::gl::Texture &texture);
 	//! draws a specific area of a warped texture
-	void				draw(const ci::gl::Texture &texture, ci::Area &srcArea);
+	void				draw(const ci::gl::Texture &texture, const ci::Area &srcArea);
 	//! draws a specific area of a warped texture to a specific region
-	virtual void		draw(const ci::gl::Texture &texture, ci::Area &srcArea, ci::Rectf &destRect) = 0;
+	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
 
 	//! adjusts both the source area and destination rectangle so that they are clipped against the warp's content
 	bool				clip( ci::Area &srcArea, ci::Rectf &destRect ) const;

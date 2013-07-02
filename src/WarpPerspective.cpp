@@ -120,16 +120,18 @@ void WarpPerspective::reset()
 	mIsDirty = true;
 }
 
-void WarpPerspective::draw(const gl::Texture &texture, Area &srcArea, Rectf &destRect)
+void WarpPerspective::draw(const gl::Texture &texture, const Area &srcArea, const Rectf &destRect)
 {
 	// clip against bounds
-	clip( srcArea, destRect );
+	Area	area = srcArea;
+	Rectf	rect = destRect;
+	clip( area, rect );
 
 	// draw texture
 	gl::pushModelView();
 	gl::multModelView( getTransform() );
 
-	gl::draw( texture, srcArea, destRect );
+	gl::draw( texture, area, rect );
 
 	gl::popModelView();	
 

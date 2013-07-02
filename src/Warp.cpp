@@ -55,15 +55,12 @@ Warp::~Warp(void)
 
 void Warp::draw(const gl::Texture &texture)
 {
-	Area srcArea( texture.getBounds() );
-	Rectf dstRect( getBounds() );
-	draw( texture, srcArea, dstRect );
+	draw( texture, texture.getBounds(), Rectf( getBounds() ) );
 }
 
-void Warp::draw(const gl::Texture &texture, Area &srcArea)
+void Warp::draw(const gl::Texture &texture, const Area &srcArea)
 {
-	Rectf dstRect( getBounds() );
-	draw( texture, srcArea, dstRect );
+	draw( texture, srcArea, Rectf( getBounds() ) );
 }
 
 bool Warp::clip( Area &srcArea, Rectf &destRect ) const
@@ -418,10 +415,6 @@ bool Warp::handleKeyDown(WarpList &warps, KeyEvent event)
 		case KeyEvent::KEY_RIGHT:
 			// do not select another control point
 			break;
-		default:
-			// find and select closest control point
-			selectClosestControlPoint( warps, sMouse );
-			break;
 	}
 
 	return handled;
@@ -498,6 +491,19 @@ bool Warp::keyDown( KeyEvent event )
 	if(mSelected < 0 || mSelected >= mPoints.size()) return false;
 
 	switch( event.getCode() ) {
+		case KeyEvent::KEY_TAB:
+			// select the next or previous (+SHIFT) control point
+			if( event.isShiftDown() ) {
+				--mSelected;
+				if(mSelected < 0) mSelected = (int) mPoints.size() - 1;
+				selectControlPoint( mSelected );
+			}
+			else { 
+				++mSelected;
+				if(mSelected >= (int) mPoints.size()) mSelected = 0;
+				selectControlPoint( mSelected );
+			}
+			break;
 		case KeyEvent::KEY_UP: {
 			if(mSelected < 0 || mSelected >= mPoints.size()) return false;
 			float step = event.isShiftDown() ? 10.0f : 0.5f;

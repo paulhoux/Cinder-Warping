@@ -59,7 +59,7 @@ public:
 	virtual void		end();
 
 	//! draws a warped texture
-	virtual void		draw(const ci::gl::Texture &texture, ci::Area &srcArea, ci::Rectf &destRect); 
+	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
 
 	//! set the number of horizontal control points for this warp 
 	void				setNumControlX(int n);

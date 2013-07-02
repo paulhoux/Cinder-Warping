@@ -144,7 +144,7 @@ bool WarpPerspectiveBilinear::keyDown(KeyEvent event)
 		case KeyEvent::KEY_LEFT:
 		case KeyEvent::KEY_RIGHT: {
 			// make sure cursor keys are handled by 1 warp only
-			if(!mWarp->keyDown(event)) 
+			if(!isCorner( mSelected ) || !mWarp->keyDown(event)) 
 				return WarpBilinear::keyDown( event );
 
 			return true;
