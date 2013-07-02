@@ -116,17 +116,17 @@ public:
 	bool				clip( ci::Area &srcArea, ci::Rectf &destRect ) const;
 
 	//! returns the coordinates of the specified control point
-	virtual ci::Vec2f	getControlPoint(size_t index) const;
+	virtual ci::Vec2f	getControlPoint(unsigned index) const;
 	//! sets the coordinates of the specified control point
-	virtual void		setControlPoint(size_t index, const ci::Vec2f &pos);
+	virtual void		setControlPoint(unsigned index, const ci::Vec2f &pos);
 	//! moves the specified control point 
-	virtual void		moveControlPoint(size_t index, const ci::Vec2f &shift);
+	virtual void		moveControlPoint(unsigned index, const ci::Vec2f &shift);
 	//! select one of the control points
-	virtual void		selectControlPoint(size_t index);
+	virtual void		selectControlPoint(unsigned index);
 	//! deselect the selected control point
 	virtual void		deselectControlPoint();
 	//! returns the index of the closest control point, as well as the distance in pixels
-	virtual size_t		findControlPoint(const ci::Vec2f &pos, float *distance) const ;
+	virtual unsigned		findControlPoint(const ci::Vec2f &pos, float *distance) const ;
 
 	//! set the width and height in pixels of the content of all warps
 	static void			setSize(const WarpList &warps, int w, int h) { setSize( warps, ci::Vec2i(w, h) ); }

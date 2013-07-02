@@ -47,7 +47,7 @@ XmlTree	WarpPerspectiveBilinear::toXml() const
 	XmlTree xml = WarpBilinear::toXml();
 
 	// set corners
-	for(size_t i=0;i<4;++i) {
+	for(unsigned i=0;i<4;++i) {
 		Vec2f corner = mWarp->getControlPoint(i);
 
 		XmlTree cp;
@@ -66,7 +66,7 @@ void WarpPerspectiveBilinear::fromXml(const XmlTree &xml)
 	WarpBilinear::fromXml(xml);
 
 	// get corners
-	size_t i = 0;
+	unsigned i = 0;
 	for(XmlTree::ConstIter child=xml.begin("corner");child!=xml.end();++child) {
 		float x = child->getAttributeValue<float>("x", 0.0f);
 		float y = child->getAttributeValue<float>("y", 0.0f);
@@ -93,7 +93,7 @@ void WarpPerspectiveBilinear::draw(bool controls)
 	if( isEditModeEnabled() ) {
 		if(controls) {
 			// draw control points
-			for(size_t i=0;i<mPoints.size();++i) 
+			for(unsigned i=0;i<mPoints.size();++i) 
 				drawControlPoint( getControlPoint(i) * mWindowSize, mSelected==i );
 		}
 	}
@@ -194,7 +194,7 @@ void WarpPerspectiveBilinear::setSize(const Vec2i &size)
 	WarpBilinear::setSize(size);
 }
 
-Vec2f WarpPerspectiveBilinear::getControlPoint(size_t index) const
+Vec2f WarpPerspectiveBilinear::getControlPoint(unsigned index) const
 {
 	// depending on index, return perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -210,7 +210,7 @@ Vec2f WarpPerspectiveBilinear::getControlPoint(size_t index) const
 	}
 }
 
-void WarpPerspectiveBilinear::setControlPoint(size_t index, const Vec2f &pos)
+void WarpPerspectiveBilinear::setControlPoint(unsigned index, const Vec2f &pos)
 {
 	// depending on index, set perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -227,7 +227,7 @@ void WarpPerspectiveBilinear::setControlPoint(size_t index, const Vec2f &pos)
 	}
 }
 
-void WarpPerspectiveBilinear::moveControlPoint(size_t index, const Vec2f &shift)
+void WarpPerspectiveBilinear::moveControlPoint(unsigned index, const Vec2f &shift)
 {
 	// depending on index, move perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -241,7 +241,7 @@ void WarpPerspectiveBilinear::moveControlPoint(size_t index, const Vec2f &shift)
 	}
 }
 
-void WarpPerspectiveBilinear::selectControlPoint(size_t index)
+void WarpPerspectiveBilinear::selectControlPoint(unsigned index)
 {
 	// depending on index, select perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -261,16 +261,16 @@ void WarpPerspectiveBilinear::deselectControlPoint()
 	Warp::deselectControlPoint();
 }
 
-bool WarpPerspectiveBilinear::isCorner(size_t index) const
+bool WarpPerspectiveBilinear::isCorner(unsigned index) const
 {
-	size_t numControls = (size_t)(mControlsX * mControlsY);
+	unsigned numControls = (unsigned)(mControlsX * mControlsY);
 
 	return (index==0 || index==(numControls-mControlsY) || index==(numControls-1) || index==(mControlsY-1));
 }
 
-size_t WarpPerspectiveBilinear::convertIndex(size_t index) const
+unsigned WarpPerspectiveBilinear::convertIndex(unsigned index) const
 {	
-	size_t numControls = (size_t)(mControlsX * mControlsY);
+	unsigned numControls = (unsigned)(mControlsX * mControlsY);
 
 	if(index == 0) return 0;
 	else if(index == (numControls-mControlsY)) return 2;

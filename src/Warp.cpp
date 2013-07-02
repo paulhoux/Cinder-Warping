@@ -190,13 +190,13 @@ void Warp::setSize(const Vec2i &size)
 	mIsDirty = true;
 }
 
-Vec2f Warp::getControlPoint(size_t index) const
+Vec2f Warp::getControlPoint(unsigned index) const
 {
 	if(index < 0 || index >= mPoints.size()) return Vec2f::zero();
 	return mPoints[index]; 
 }
 
-void Warp::setControlPoint(size_t index, const Vec2f &pos)
+void Warp::setControlPoint(unsigned index, const Vec2f &pos)
 {
 	if( index < 0 || index >= mPoints.size() ) return;
 	mPoints[index] = pos;
@@ -204,7 +204,7 @@ void Warp::setControlPoint(size_t index, const Vec2f &pos)
 	mIsDirty = true;
 }
 
-void Warp::moveControlPoint(size_t index, const Vec2f &shift)
+void Warp::moveControlPoint(unsigned index, const Vec2f &shift)
 {
 	if( index < 0 || index >= mPoints.size() ) return;
 	mPoints[index] += shift;
@@ -212,7 +212,7 @@ void Warp::moveControlPoint(size_t index, const Vec2f &shift)
 	mIsDirty = true;
 }
 
-void Warp::selectControlPoint(size_t index)
+void Warp::selectControlPoint(unsigned index)
 {
 	if( index < 0 || index >= mPoints.size() ) return;
 	if( index == mSelected ) return;
@@ -226,14 +226,14 @@ void Warp::deselectControlPoint()
 	mSelected = -1; // since this is an unsigned int, actual value will be 'MAX_INTEGER'
 }
 
-size_t Warp::findControlPoint(const Vec2f &pos, float *distance) const
+unsigned Warp::findControlPoint(const Vec2f &pos, float *distance) const
 {
-	size_t index;
+	unsigned index;
 
 	// find closest control point
 	float dist = 10.0e6f;
 
-	for(size_t i=0;i<mPoints.size();i++) {
+	for(unsigned i=0;i<mPoints.size();i++) {
 		float d = pos.distance( getControlPoint(i) * mWindowSize );
 
 		if(d < dist){
@@ -249,9 +249,9 @@ size_t Warp::findControlPoint(const Vec2f &pos, float *distance) const
 
 void Warp::selectClosestControlPoint( const WarpList &warps, const Vec2i &position ) 
 {
-	WarpRef	warp;
-	size_t	i, index;
-	float	d, distance=10.0e6f;	
+	WarpRef		warp;
+	unsigned	i, index;
+	float		d, distance=10.0e6f;	
 
 	// find warp and distance to closest control point
 	for(WarpConstReverseIter itr=warps.rbegin();itr!=warps.rend();++itr) {
@@ -332,7 +332,7 @@ void Warp::writeSettings( const WarpList &warps, const DataTargetRef &target )
 	profile.setAttribute("name", "default");
 
 	// 
-	for(size_t i=0;i<warps.size();++i) {
+	for(unsigned i=0;i<warps.size();++i) {
 		// create <map>
 		XmlTree			map;
 		map.setTag("map");

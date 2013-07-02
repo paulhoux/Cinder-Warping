@@ -53,13 +53,13 @@ public:
 	void		setSize(const ci::Vec2i &size);
 
 	//! returns the coordinates of the specified control point
-	ci::Vec2f	getControlPoint(size_t index) const;
+	ci::Vec2f	getControlPoint(unsigned index) const;
 	//! sets the coordinates of the specified control point
-	void		setControlPoint(size_t index, const ci::Vec2f &pos);
+	void		setControlPoint(unsigned index, const ci::Vec2f &pos);
 	//! moves the specified control point 
-	void		moveControlPoint(size_t index, const ci::Vec2f &shift);
+	void		moveControlPoint(unsigned index, const ci::Vec2f &shift);
 	//! select one of the control points
-	void		selectControlPoint(size_t index);
+	void		selectControlPoint(unsigned index);
 	//! deselect the selected control point
 	void		deselectControlPoint();
 protected:
@@ -67,9 +67,9 @@ protected:
 	void		draw(bool controls=true);
 
 	//! returns whether or not the control point is one of the 4 corners and should be treated as a perspective control point
-	bool		isCorner(size_t index) const;
+	bool		isCorner(unsigned index) const;
 	//! converts the control point index to the appropriate perspective warp index
-	size_t		convertIndex(size_t index) const;
+	unsigned	convertIndex(unsigned index) const;
 
 protected:
 	WarpPerspectiveRef	mWarp;

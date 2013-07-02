@@ -224,7 +224,7 @@ void WarpBilinear::draw(bool controls)
 
 		if(controls) {
 			// draw control points
-			for(size_t i=0;i<mPoints.size();i++) 
+			for(unsigned i=0;i<mPoints.size();i++) 
 				drawControlPoint( getControlPoint(i) * mWindowSize, i == mSelected );
 		}
 	}
@@ -634,7 +634,7 @@ Rectf WarpBilinear::getMeshBounds() const
 	Vec2f min = Vec2f::one();
 	Vec2f max = Vec2f::zero();
 
-	for(size_t i=0;i<mPoints.size();++i) {
+	for(unsigned i=0;i<mPoints.size();++i) {
 		min.x = math<float>::min( mPoints[i].x, min.x );
 		min.y = math<float>::min( mPoints[i].y, min.y );
 		max.x = math<float>::max( mPoints[i].x, max.x );
