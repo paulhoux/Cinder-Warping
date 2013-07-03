@@ -192,13 +192,13 @@ void Warp::setSize(const Vec2i &size)
 
 Vec2f Warp::getControlPoint(unsigned index) const
 {
-	if(index < 0 || index >= mPoints.size()) return Vec2f::zero();
+	if( index >= mPoints.size()) return Vec2f::zero();
 	return mPoints[index]; 
 }
 
 void Warp::setControlPoint(unsigned index, const Vec2f &pos)
 {
-	if( index < 0 || index >= mPoints.size() ) return;
+	if( index >= mPoints.size() ) return;
 	mPoints[index] = pos;
 
 	mIsDirty = true;
@@ -206,7 +206,7 @@ void Warp::setControlPoint(unsigned index, const Vec2f &pos)
 
 void Warp::moveControlPoint(unsigned index, const Vec2f &shift)
 {
-	if( index < 0 || index >= mPoints.size() ) return;
+	if( index >= mPoints.size() ) return;
 	mPoints[index] += shift;
 
 	mIsDirty = true;
@@ -214,8 +214,7 @@ void Warp::moveControlPoint(unsigned index, const Vec2f &shift)
 
 void Warp::selectControlPoint(unsigned index)
 {
-	if( index < 0 || index >= mPoints.size() ) return;
-	if( index == mSelected ) return;
+	if( index >= mPoints.size() || index == mSelected ) return;
 
 	mSelected = index;
 	sSelectedTime = app::getElapsedSeconds();
