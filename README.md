@@ -35,8 +35,35 @@ This block relies on Cinder's optional OpenCV block,so make sure you've installe
 
 
 #####Creating a sample application using Tinderbox
-For more information on how to use the block with TinderBox, please follow this link:
-https://forum.libcinder.org/#Topic/23286000001617049
+The provided sample will show you how to create warps, read them from and write them to a settings file, toggle the editor and handle mouse and key events. To create and compile the sample:
+* Run Cinder's TinderBox
+* Select "Warping: Basic" from the Template popup menu
+* Choose a name for the project
+* Choose a location for the project
+* Choose your environment(s) of choice
+* Press "Next"
+* Make sure both the "OpenCV" and "Warping" blocks are enabled (Install: Copy or Relative)
+* Press "Finish"
+
+
+#####Controls
+The block provides a built-in editor to adjust your warps. When activated using the ```Warp::enableEditMode(true)``` function, these are the keys you can use:
+* Use mouse or cursor keys to move the currently selected control point
+* Press - or + to change brightness
+* Press R to reset the warp to its default settings
+* Press F1 to reduce the number of horizontal control points
+* Press F2 to increase the number of horizontal control points
+* Press F3 to reduce the number of vertical control points
+* Press F4 to increase the number of vertical control points
+* Press F5 to decrease the mesh resolution
+* Press F6 to increase the mesh resolution
+* Press F7 to toggle adaptive mesh resolution
+* Press TAB to select the next control point
+* Press M to toggle between linear and curved mapping (unavailable for Perspective warps)
+* Press F9 to rotate content counter-clockwise (unavailable for non-Perspective warps)
+* Press F10 to rotate content clockwise (unavailable for non-Perspective warps)
+* Press F11 to flip content horizontally (unavailable for non-Perspective warps)
+* Press F12 to flip content vertically (unavailable for non-Perspective warps)
 
 
 #####To-Do's
