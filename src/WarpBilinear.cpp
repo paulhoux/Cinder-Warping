@@ -205,9 +205,20 @@ void WarpBilinear::draw(bool controls)
 	gl::disableDepthWrite();
 
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	
+	// adjust brightness
+	if( mBrightness < 1.f )
+	{
+		ColorA currentColor;
+		glGetFloatv(GL_CURRENT_COLOR, currentColor.ptr());
+
+		ColorA drawColor = mBrightness * currentColor;
+		drawColor.a = currentColor.a;
+
+		gl::color( drawColor );
+	}
 
 	// draw textured mesh
-	gl::color( Color(mBrightness, mBrightness, mBrightness) );
 	gl::draw( mVboMesh );	
 
 	// draw edit interface

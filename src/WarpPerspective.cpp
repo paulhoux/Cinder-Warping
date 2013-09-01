@@ -127,13 +127,31 @@ void WarpPerspective::draw(const gl::Texture &texture, const Area &srcArea, cons
 	Rectf	rect = destRect;
 	clip( area, rect );
 
+	// save current drawing color
+	glPushAttrib(GL_CURRENT_BIT); 
+	
+	// adjust brightness
+	if( mBrightness < 1.f )
+	{
+		ColorA currentColor;
+		glGetFloatv(GL_CURRENT_COLOR, currentColor.ptr());
+
+		ColorA drawColor = mBrightness * currentColor;
+		drawColor.a = currentColor.a;
+
+		gl::color( drawColor );
+	}
+
 	// draw texture
 	gl::pushModelView();
 	gl::multModelView( getTransform() );
 
 	gl::draw( texture, area, rect );
 
-	gl::popModelView();	
+	gl::popModelView();
+
+	// restore states
+	glPopAttrib();
 
 	// draw interface
 	draw();
