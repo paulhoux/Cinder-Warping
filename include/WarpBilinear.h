@@ -30,14 +30,17 @@
 
 namespace ph { namespace warping {
 
-typedef boost::shared_ptr<class WarpBilinear>	WarpBilinearRef;
+typedef std::shared_ptr<class WarpBilinear>	WarpBilinearRef;
 
 class WarpBilinear
-	: public Warp, public boost::enable_shared_from_this<WarpBilinear>
+	: public Warp, public std::enable_shared_from_this<WarpBilinear>
 {
 public:
-	//WarpBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
-	WarpBilinear();
+	//
+	static WarpBilinearRef create(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format()) { return std::make_shared<WarpBilinear>(format); }
+
+public:
+	WarpBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
 	virtual ~WarpBilinear(void);
 
 	//!
@@ -61,6 +64,9 @@ public:
 	//! draws a warped texture
 	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
 
+	//! draws a warped texture
+	virtual void		draw(const ci::gl::TextureRef texture, const ci::Area &srcArea, const ci::Rectf &destRect); 
+
 	//! set the number of horizontal control points for this warp 
 	void				setNumControlX(int n);
 	//! set the number of vertical control points for this warp
@@ -72,8 +78,8 @@ public:
 protected:
 	//! draws the warp as a mesh, allowing you to use your own texture instead of the FBO
 	virtual void		draw(bool controls=true);
-	//! Creates the frame buffer object and updates the vertex buffer object is necessary
-	void				create();
+	//! Creates the frame buffer object and updates the vertex buffer object if necessary
+	void				createBuffers();
 	//! Creates the vertex buffer object
 	void				createMesh( int resolutionX=36, int resolutionY=36 );
 	//! Updates the vertex buffer object based on the control points

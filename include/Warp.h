@@ -37,12 +37,13 @@ namespace cinder {
 	class XmlTree;
 
 	namespace app {
-		class KeyEvent;
-		class MouseEvent;
+		class	KeyEvent;
+		class	MouseEvent;
 	}
 
 	namespace gl {
-		class Texture;
+		class	Texture;
+		typedef	std::shared_ptr<Texture>	TextureRef;
 	}
 }
 
@@ -50,7 +51,7 @@ namespace cinder {
 
 namespace ph { namespace warping {
 
-typedef boost::shared_ptr<class Warp>		WarpRef;
+typedef std::shared_ptr<class Warp>			WarpRef;
 typedef std::vector<WarpRef>				WarpList;
 typedef WarpList::iterator					WarpIter;
 typedef WarpList::const_iterator			WarpConstIter;
@@ -58,7 +59,7 @@ typedef WarpList::reverse_iterator			WarpReverseIter;
 typedef WarpList::const_reverse_iterator	WarpConstReverseIter;
 
 class Warp
-	: public boost::enable_shared_from_this<Warp>
+	: public std::enable_shared_from_this<Warp>
 {
 public:
 	typedef enum { UNKNOWN, BILINEAR, PERSPECTIVE, PERSPECTIVE_BILINEAR } WarpType;
@@ -112,6 +113,13 @@ public:
 	//! draws a specific area of a warped texture to a specific region
 	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
 
+	//! draws a warped texture
+	void				draw(const ci::gl::TextureRef texture);
+	//! draws a specific area of a warped texture
+	void				draw(const ci::gl::TextureRef texture, const ci::Area &srcArea);
+	//! draws a specific area of a warped texture to a specific region
+	virtual void		draw(const ci::gl::TextureRef texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
+
 	//! adjusts both the source area and destination rectangle so that they are clipped against the warp's content
 	bool				clip( ci::Area &srcArea, ci::Rectf &destRect ) const;
 
@@ -126,7 +134,7 @@ public:
 	//! deselect the selected control point
 	virtual void		deselectControlPoint();
 	//! returns the index of the closest control point, as well as the distance in pixels
-	virtual unsigned		findControlPoint(const ci::Vec2f &pos, float *distance) const ;
+	virtual unsigned	findControlPoint(const ci::Vec2f &pos, float *distance) const ;
 
 	//! set the width and height in pixels of the content of all warps
 	static void			setSize(const WarpList &warps, int w, int h) { setSize( warps, ci::Vec2i(w, h) ); }

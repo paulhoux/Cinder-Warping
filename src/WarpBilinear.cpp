@@ -56,7 +56,7 @@ using namespace ci::app;
 
 namespace ph { namespace warping {
 
-WarpBilinear::WarpBilinear() : 
+WarpBilinear::WarpBilinear(const ci::gl::Fbo::Format &format) : 
 	Warp(BILINEAR),
 	mIsLinear(false),
 	mIsAdaptive(false),
@@ -66,7 +66,8 @@ WarpBilinear::WarpBilinear() :
 	mY2(1.0f),
 	mResolution(16), // higher value is coarser mesh
 	mResolutionX(0),
-	mResolutionY(0)
+	mResolutionY(0),
+	mFboFormat(format)
 {
 	reset();
 }
@@ -141,6 +142,30 @@ void WarpBilinear::draw(const gl::Texture &texture, const Area &srcArea, const R
 	draw();
 }
 
+void WarpBilinear::draw(const gl::TextureRef texture, const Area &srcArea, const Rectf &destRect)
+{
+	gl::SaveTextureBindState state( texture->getTarget() );
+	
+	// clip against bounds
+	Area	area = srcArea;
+	Rectf	rect = destRect;
+	clip( area, rect );
+
+	// set texture coordinates
+	float w = static_cast<float>( texture->getWidth() );
+	float h = static_cast<float>( texture->getHeight() );
+
+	if( texture->getTarget() == GL_TEXTURE_RECTANGLE_ARB )
+		setTexCoords( (float)area.x1, (float)area.y1, (float)area.x2, (float)area.y2 );
+	else
+		setTexCoords( area.x1 / w, area.y1 / h, area.x2 / w, area.y2 / h );
+
+	// draw
+	texture->enableAndBind();
+
+	draw();
+}
+
 void WarpBilinear::begin()
 {
 	// check if the FBO was created and is of the correct size
@@ -194,7 +219,7 @@ void WarpBilinear::end()
 
 void WarpBilinear::draw(bool controls)
 {
-	create();
+	createBuffers();
 
 	if(!mVboMesh) return;
 
@@ -347,7 +372,7 @@ bool WarpBilinear::keyDown(KeyEvent event)
 	return true;
 }
 
-void WarpBilinear::create()
+void WarpBilinear::createBuffers()
 {
 	if(mIsDirty) {
 		if(mIsAdaptive) {

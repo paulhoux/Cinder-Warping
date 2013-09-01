@@ -25,13 +25,17 @@
 
 namespace ph { namespace warping {
 
-typedef boost::shared_ptr<class WarpPerspectiveBilinear>	WarpPerspectiveBilinearRef;
+typedef std::shared_ptr<class WarpPerspectiveBilinear>	WarpPerspectiveBilinearRef;
 
 class WarpPerspectiveBilinear
-	: public WarpBilinear, public boost::enable_shared_from_this<WarpPerspectiveBilinear>
+	: public WarpBilinear, public std::enable_shared_from_this<WarpPerspectiveBilinear>
 {
 public:
-	WarpPerspectiveBilinear();
+	//
+	static WarpPerspectiveBilinearRef create(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format()) { return std::make_shared<WarpPerspectiveBilinear>(format); }
+
+public:
+	WarpPerspectiveBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
 	~WarpPerspectiveBilinear(void);
 
 	//!

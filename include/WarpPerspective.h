@@ -27,11 +27,15 @@
 
 namespace ph { namespace warping {
 
-typedef boost::shared_ptr<class WarpPerspective> WarpPerspectiveRef;
+typedef std::shared_ptr<class WarpPerspective> WarpPerspectiveRef;
 
 class WarpPerspective
-	: public Warp, public boost::enable_shared_from_this<WarpPerspective>
+	: public Warp, public std::enable_shared_from_this<WarpPerspective>
 {
+public:
+	//
+	static WarpPerspectiveRef create() { return std::make_shared<WarpPerspective>(); }
+
 public:
 	WarpPerspective(void);
 	~WarpPerspective(void);
@@ -50,6 +54,9 @@ public:
 
 	//! draws a warped texture
 	void			draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect);
+
+	//! draws a warped texture
+	void			draw(const ci::gl::TextureRef texture, const ci::Area &srcArea, const ci::Rectf &destRect);
 
 	//! override keyDown method to add additional key handling
 	bool			keyDown( ci::app::KeyEvent event );

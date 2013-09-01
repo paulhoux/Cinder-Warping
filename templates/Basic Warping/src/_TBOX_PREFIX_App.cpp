@@ -52,12 +52,12 @@ public:
 
 	void updateWindowTitle();
 private:
-	gl::Texture	mImage;
-	WarpList	mWarps;
+	gl::TextureRef	mImage;
+	WarpList		mWarps;
 
-	bool		mUseBeginEnd;
+	bool			mUseBeginEnd;
 
-	Area		mSrcArea;
+	Area			mSrcArea;
 };
 
 void _TBOX_PREFIX_App::setup()
@@ -75,18 +75,18 @@ void _TBOX_PREFIX_App::setup()
 	else
 	{
 		// otherwise create a warp from scratch
-		mWarps.push_back( WarpPerspectiveBilinearRef( new WarpPerspectiveBilinear() ) );
+		mWarps.push_back( WarpPerspectiveBilinear::create() );
 	}
 
 	// load test image
 	try
 	{ 
-		mImage = gl::Texture( loadImage( loadAsset("help.png") ) );
+		mImage = gl::Texture::create( loadImage( loadAsset("help.png") ) );
 
-		mSrcArea = mImage.getBounds();
+		mSrcArea = mImage->getBounds();
 
 		// adjust the content size of the warps
-		Warp::setSize( mWarps, mImage.getSize() );
+		Warp::setSize( mWarps, mImage->getSize() );
 	}
 	catch( const std::exception &e )
 	{
@@ -208,14 +208,14 @@ void _TBOX_PREFIX_App::keyDown( KeyEvent event )
 			break;
 		case KeyEvent::KEY_a:
 			// toggle drawing a random region of the image
-			if( mSrcArea.getWidth() != mImage.getWidth() || mSrcArea.getHeight() != mImage.getHeight() )
-				mSrcArea = mImage.getBounds();
+			if( mSrcArea.getWidth() != mImage->getWidth() || mSrcArea.getHeight() != mImage->getHeight() )
+				mSrcArea = mImage->getBounds();
 			else
 			{
-				int x1 = Rand::randInt( 0, mImage.getWidth() - 150 );
-				int y1 = Rand::randInt( 0, mImage.getHeight() - 150 );
-				int x2 = Rand::randInt( x1 + 150, mImage.getWidth() );
-				int y2 = Rand::randInt( y1 + 150, mImage.getHeight() );
+				int x1 = Rand::randInt( 0, mImage->getWidth() - 150 );
+				int y1 = Rand::randInt( 0, mImage->getHeight() - 150 );
+				int x2 = Rand::randInt( x1 + 150, mImage->getWidth() );
+				int y2 = Rand::randInt( y1 + 150, mImage->getHeight() );
 				mSrcArea = Area( x1, y1, x2, y2 );
 			}
 			break;
