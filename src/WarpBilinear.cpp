@@ -120,7 +120,8 @@ void WarpBilinear::reset()
 
 void WarpBilinear::draw(const gl::Texture &texture, const Area &srcArea, const Rectf &destRect)
 {
-	gl::SaveTextureBindState state( texture.getTarget() );
+	gl::SaveTextureBindState bindState( texture.getTarget() );
+	gl::BoolState boolState( texture.getTarget() );
 	
 	// clip against bounds
 	Area	area = srcArea;
@@ -144,7 +145,8 @@ void WarpBilinear::draw(const gl::Texture &texture, const Area &srcArea, const R
 
 void WarpBilinear::draw(const gl::TextureRef texture, const Area &srcArea, const Rectf &destRect)
 {
-	gl::SaveTextureBindState state( texture->getTarget() );
+	gl::SaveTextureBindState bindState( texture->getTarget() );
+	gl::BoolState boolState( texture->getTarget() );
 	
 	// clip against bounds
 	Area	area = srcArea;
