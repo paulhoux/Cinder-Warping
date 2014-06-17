@@ -75,6 +75,9 @@ public:
 	//! returns the type of the warp
 	WarpType			getType() const { return mType; };
 
+	//! returns a shared pointer to this warp
+	WarpRef	getPtr() { return shared_from_this(); }
+
 	//!
 	virtual ci::XmlTree	toXml() const;
 	//!

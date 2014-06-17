@@ -28,7 +28,7 @@ namespace ph { namespace warping {
 typedef std::shared_ptr<class WarpPerspectiveBilinear>	WarpPerspectiveBilinearRef;
 
 class WarpPerspectiveBilinear
-	: public WarpBilinear, public std::enable_shared_from_this<WarpPerspectiveBilinear>
+	: public WarpBilinear
 {
 public:
 	//
@@ -37,6 +37,9 @@ public:
 public:
 	WarpPerspectiveBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
 	~WarpPerspectiveBilinear(void);
+
+	//! returns a shared pointer to this warp
+	WarpPerspectiveBilinearRef	getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>(shared_from_this()); }
 
 	//!
 	ci::XmlTree	toXml() const;

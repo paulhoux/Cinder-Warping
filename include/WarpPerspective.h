@@ -30,7 +30,7 @@ namespace ph { namespace warping {
 typedef std::shared_ptr<class WarpPerspective> WarpPerspectiveRef;
 
 class WarpPerspective
-	: public Warp, public std::enable_shared_from_this<WarpPerspective>
+	: public Warp
 {
 public:
 	//
@@ -39,6 +39,9 @@ public:
 public:
 	WarpPerspective(void);
 	~WarpPerspective(void);
+
+	//! returns a shared pointer to this warp
+	WarpPerspectiveRef	getPtr() { return std::static_pointer_cast<WarpPerspective>(shared_from_this()); }
 
 	//! get the transformation matrix
 	ci::Matrix44f	getTransform();
