@@ -25,9 +25,6 @@
 
 #include "Warp.h"
 
-#include <boost/shared_ptr.hpp>
-#include <cassert>
-
 namespace ph { namespace warping {
 
 typedef std::shared_ptr<class WarpBilinear>	WarpBilinearRef;

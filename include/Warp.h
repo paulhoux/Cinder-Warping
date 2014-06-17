@@ -29,7 +29,6 @@
 #include "cinder/Vector.h"
 
 #include <vector>
-#include <boost/enable_shared_from_this.hpp>
 
 // forward declarations
 
