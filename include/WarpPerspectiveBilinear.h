@@ -8,78 +8,79 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  Cinder-Warping is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #pragma once
 
 #include "WarpBilinear.h"
 #include "WarpPerspective.h"
 
-namespace ph { namespace warping {
+namespace ph {
+namespace warping {
 
 typedef std::shared_ptr<class WarpPerspectiveBilinear>	WarpPerspectiveBilinearRef;
 
 class WarpPerspectiveBilinear
-	: public WarpBilinear
-{
+	: public WarpBilinear {
 public:
 	//
-	static WarpPerspectiveBilinearRef create(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format()) { return std::make_shared<WarpPerspectiveBilinear>(format); }
+	static WarpPerspectiveBilinearRef create( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() ) { return std::make_shared<WarpPerspectiveBilinear>( format ); }
 
 public:
-	WarpPerspectiveBilinear(const ci::gl::Fbo::Format &format=ci::gl::Fbo::Format());
-	~WarpPerspectiveBilinear(void);
+	WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
+	~WarpPerspectiveBilinear( void );
 
 	//! returns a shared pointer to this warp
-	WarpPerspectiveBilinearRef	getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>(shared_from_this()); }
+	WarpPerspectiveBilinearRef	getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>( shared_from_this() ); }
 
 	//!
-	ci::XmlTree	toXml() const;
+	ci::XmlTree	toXml() const override;
 	//!
-	void		fromXml(const ci::XmlTree &xml);
+	void		fromXml( const ci::XmlTree &xml ) override;
 
-	bool		mouseMove( ci::app::MouseEvent event );
-	bool		mouseDown( ci::app::MouseEvent event );
-	bool		mouseDrag( ci::app::MouseEvent event );
+	void		mouseMove( ci::app::MouseEvent &event ) override;
+	void		mouseDown( ci::app::MouseEvent &event ) override;
+	void		mouseDrag( ci::app::MouseEvent &event ) override;
 
-	bool		keyDown( ci::app::KeyEvent event );
+	void		keyDown( ci::app::KeyEvent &event ) override;
 
-	bool		resize();
+	void		resize() override;
 
 	//! set the width and height of the content in pixels
-	void		setSize(int w, int h);
+	void		setSize( int w, int h ) override;
 	//! set the width and height of the content in pixels
-	void		setSize(const ci::Vec2i &size);
+	void		setSize( const ci::ivec2 &size ) override;
 
 	//! returns the coordinates of the specified control point
-	ci::Vec2f	getControlPoint(unsigned index) const;
+	ci::vec2	getControlPoint( unsigned index ) const override;
 	//! sets the coordinates of the specified control point
-	void		setControlPoint(unsigned index, const ci::Vec2f &pos);
+	void		setControlPoint( unsigned index, const ci::vec2 &pos ) override;
 	//! moves the specified control point 
-	void		moveControlPoint(unsigned index, const ci::Vec2f &shift);
+	void		moveControlPoint( unsigned index, const ci::vec2 &shift ) override;
 	//! select one of the control points
-	void		selectControlPoint(unsigned index);
+	void		selectControlPoint( unsigned index ) override;
 	//! deselect the selected control point
-	void		deselectControlPoint();
+	void		deselectControlPoint() override;
 protected:
 	//! 
-	void		draw(bool controls=true);
+	void		draw( bool controls = true ) override;
 
 	//! returns whether or not the control point is one of the 4 corners and should be treated as a perspective control point
-	bool		isCorner(unsigned index) const;
+	bool		isCorner( unsigned index ) const;
 	//! converts the control point index to the appropriate perspective warp index
-	unsigned	convertIndex(unsigned index) const;
+	unsigned	convertIndex( unsigned index ) const;
 
 protected:
 	WarpPerspectiveRef	mWarp;
 };
 
-} } // namespace ph::warping
+}
+} // namespace ph::warping

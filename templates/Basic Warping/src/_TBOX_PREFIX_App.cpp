@@ -21,6 +21,7 @@
 #include "cinder/ImageIo.h"
 #include "cinder/Rand.h"
 #include "cinder/app/AppBasic.h"
+#include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
 
@@ -81,7 +82,7 @@ void _TBOX_PREFIX_App::setup()
 	// load test image
 	try
 	{ 
-		mImage = gl::Texture::create( loadImage( loadAsset("help.png") ) );
+		mImage = gl::Texture::create( loadImage( loadAsset("help.png") ), gl::Texture2d::Format().loadTopDown() );
 
 		mSrcArea = mImage->getBounds();
 

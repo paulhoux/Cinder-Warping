@@ -8,15 +8,15 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  Cinder-Warping is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #pragma once
 
@@ -33,22 +33,23 @@
 // forward declarations
 
 namespace cinder {
-	class XmlTree;
+class XmlTree;
 
-	namespace app {
-		class	KeyEvent;
-		class	MouseEvent;
-	}
+namespace app {
+class	KeyEvent;
+class	MouseEvent;
+}
 
-	namespace gl {
-		class	Texture;
-		typedef	std::shared_ptr<Texture>	TextureRef;
-	}
+namespace gl {
+class	Texture2d;
+typedef	std::shared_ptr<Texture2d>	Texture2dRef;
+}
 }
 
 //
 
-namespace ph { namespace warping {
+namespace ph {
+namespace warping {
 
 typedef std::shared_ptr<class Warp>			WarpRef;
 typedef std::vector<WarpRef>				WarpList;
@@ -58,17 +59,16 @@ typedef WarpList::reverse_iterator			WarpReverseIter;
 typedef WarpList::const_reverse_iterator	WarpConstReverseIter;
 
 class Warp
-	: public std::enable_shared_from_this<Warp>
-{
+	: public std::enable_shared_from_this < Warp > {
 public:
 	typedef enum { UNKNOWN, BILINEAR, PERSPECTIVE, PERSPECTIVE_BILINEAR } WarpType;
 public:
-	Warp(WarpType type=UNKNOWN);
-	virtual ~Warp(void);
+	Warp( WarpType type = UNKNOWN );
+	virtual ~Warp( void );
 
 	//!
 	static bool			isEditModeEnabled() { return sIsEditMode; };
-	static void			enableEditMode(bool enabled=true) { sIsEditMode = enabled; };
+	static void			enableEditMode( bool enabled = true ) { sIsEditMode = enabled; };
 	static void			disableEditMode() { sIsEditMode = false; };
 	static void			toggleEditMode() { sIsEditMode = !sIsEditMode; };
 
@@ -76,30 +76,30 @@ public:
 	WarpType			getType() const { return mType; };
 
 	//! returns a shared pointer to this warp
-	WarpRef	getPtr() { return shared_from_this(); }
+	WarpRef				getPtr() { return shared_from_this(); }
 
 	//!
 	virtual ci::XmlTree	toXml() const;
 	//!
-	virtual void		fromXml(const ci::XmlTree &xml);
+	virtual void		fromXml( const ci::XmlTree &xml );
 
 	//! get the width of the content in pixels
 	int					getWidth() const { return mWidth; };
 	//! get the height of the content in pixels
 	int					getHeight() const { return mHeight; };
 	//! get the width and height of the content in pixels
-	ci::Vec2i			getSize() const { return ci::Vec2i(mWidth, mHeight); };
+	ci::ivec2			getSize() const { return ci::ivec2( mWidth, mHeight ); };
 	//! get the width and height of the content in pixels
-	ci::Area			getBounds() const { return ci::Area(0, 0, mWidth, mHeight); };
+	ci::Area			getBounds() const { return ci::Area( 0, 0, mWidth, mHeight ); };
 
 	//! set the width of the content in pixels
-	virtual void		setWidth(int w) { setSize(w, mHeight); }
+	virtual void		setWidth( int w ) { setSize( w, mHeight ); }
 	//! set the height of the content in pixels
-	virtual void		setHeight(int h) { setSize(mWidth, h); }
+	virtual void		setHeight( int h ) { setSize( mWidth, h ); }
 	//! set the width and height of the content in pixels
-	virtual void		setSize(int w, int h);
+	virtual void		setSize( int w, int h );
 	//! set the width and height of the content in pixels
-	virtual void		setSize(const ci::Vec2i &size);
+	virtual void		setSize( const ci::ivec2 &size );
 
 	//! reset control points to undistorted image
 	virtual void		reset() = 0;
@@ -109,46 +109,39 @@ public:
 	virtual void		end() = 0;
 
 	//! draws a warped texture
-	void				draw(const ci::gl::Texture &texture);
+	void				draw( const ci::gl::Texture2dRef &texture );
 	//! draws a specific area of a warped texture
-	void				draw(const ci::gl::Texture &texture, const ci::Area &srcArea);
+	void				draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea );
 	//! draws a specific area of a warped texture to a specific region
-	virtual void		draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
-
-	//! draws a warped texture
-	void				draw(const ci::gl::TextureRef texture);
-	//! draws a specific area of a warped texture
-	void				draw(const ci::gl::TextureRef texture, const ci::Area &srcArea);
-	//! draws a specific area of a warped texture to a specific region
-	virtual void		draw(const ci::gl::TextureRef texture, const ci::Area &srcArea, const ci::Rectf &destRect) = 0;
+	virtual void		draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea, const ci::Rectf &destRect ) = 0;
 
 	//! adjusts both the source area and destination rectangle so that they are clipped against the warp's content
 	bool				clip( ci::Area &srcArea, ci::Rectf &destRect ) const;
 
 	//! returns the coordinates of the specified control point
-	virtual ci::Vec2f	getControlPoint(unsigned index) const;
+	virtual ci::vec2	getControlPoint( unsigned index ) const;
 	//! sets the coordinates of the specified control point
-	virtual void		setControlPoint(unsigned index, const ci::Vec2f &pos);
+	virtual void		setControlPoint( unsigned index, const ci::vec2 &pos );
 	//! moves the specified control point 
-	virtual void		moveControlPoint(unsigned index, const ci::Vec2f &shift);
+	virtual void		moveControlPoint( unsigned index, const ci::vec2 &shift );
 	//! select one of the control points
-	virtual void		selectControlPoint(unsigned index);
+	virtual void		selectControlPoint( unsigned index );
 	//! deselect the selected control point
 	virtual void		deselectControlPoint();
 	//! returns the index of the closest control point, as well as the distance in pixels
-	virtual unsigned	findControlPoint(const ci::Vec2f &pos, float *distance) const ;
+	virtual unsigned	findControlPoint( const ci::vec2 &pos, float *distance ) const;
 
 	//! set the width and height in pixels of the content of all warps
-	static void			setSize(const WarpList &warps, int w, int h) { setSize( warps, ci::Vec2i(w, h) ); }
-	static void			setSize(const WarpList &warps, const ci::Vec2i &size);
+	static void			setSize( const WarpList &warps, int w, int h ) { setSize( warps, ci::ivec2( w, h ) ); }
+	static void			setSize( const WarpList &warps, const ci::ivec2 &size );
 
 	//! checks all warps and selects the closest control point
-	static void			selectClosestControlPoint( const WarpList &warps, const ci::Vec2i &position );		
-	
+	static void			selectClosestControlPoint( const WarpList &warps, const ci::ivec2 &position );
+
 	//! draw a control point in the correct preset color
-	static void			drawControlPoint( const ci::Vec2f &pt, bool selected=false, bool attached=false );
+	static void			drawControlPoint( const ci::vec2 &pt, bool selected = false, bool attached = false );
 	//! draw a control point in the specified color
-	static void			drawControlPoint( const ci::Vec2f &pt, const ci::Color &clr, float scale=1.0f );
+	static void			drawControlPoint( const ci::vec2 &pt, const ci::Color &clr, float scale = 1.0f );
 
 	//! read a settings xml file and pass back a vector of Warps
 	static WarpList		readSettings( const ci::DataSourceRef &source );
@@ -156,34 +149,34 @@ public:
 	static void			writeSettings( const WarpList &warps, const ci::DataTargetRef &target );
 
 	//! handles mouseMove events for multiple warps
-	static bool			handleMouseMove( WarpList &warps, ci::app::MouseEvent event );
+	static bool			handleMouseMove( WarpList &warps, ci::app::MouseEvent &event );
 	//! handles mouseDown events for multiple warps
-	static bool			handleMouseDown( WarpList &warps, ci::app::MouseEvent event );
+	static bool			handleMouseDown( WarpList &warps, ci::app::MouseEvent &event );
 	//! handles mouseDrag events for multiple warps
-	static bool			handleMouseDrag( WarpList &warps, ci::app::MouseEvent event );
+	static bool			handleMouseDrag( WarpList &warps, ci::app::MouseEvent &event );
 	//! handles mouseUp events for multiple warps
-	static bool			handleMouseUp( WarpList &warps, ci::app::MouseEvent event );
+	static bool			handleMouseUp( WarpList &warps, ci::app::MouseEvent &event );
 
 	//! handles keyDown events for multiple warps
-	static bool			handleKeyDown( WarpList &warps, ci::app::KeyEvent event );
+	static bool			handleKeyDown( WarpList &warps, ci::app::KeyEvent &event );
 	//! handles keyUp events for multiple warps
-	static bool			handleKeyUp( WarpList &warps, ci::app::KeyEvent event );
+	static bool			handleKeyUp( WarpList &warps, ci::app::KeyEvent &event );
 
 	//! handles resize events for multiple warps
 	static bool			handleResize( WarpList &warps );
 
-	virtual bool		mouseMove( ci::app::MouseEvent event );
-	virtual bool		mouseDown( ci::app::MouseEvent event );
-	virtual bool		mouseDrag( ci::app::MouseEvent event );
-	virtual bool		mouseUp( ci::app::MouseEvent event );
+	virtual void		mouseMove( ci::app::MouseEvent &event );
+	virtual void		mouseDown( ci::app::MouseEvent &event );
+	virtual void		mouseDrag( ci::app::MouseEvent &event );
+	virtual void		mouseUp( ci::app::MouseEvent &event );
 
-	virtual bool		keyDown( ci::app::KeyEvent event );
-	virtual bool		keyUp( ci::app::KeyEvent event );
+	virtual void		keyDown( ci::app::KeyEvent &event );
+	virtual void		keyUp( ci::app::KeyEvent &event );
 
-	virtual bool		resize();
+	virtual void		resize();
 protected:
 	//! draw the warp and its editing interface
-	virtual void		draw(bool controls=true) = 0;
+	virtual void		draw( bool controls = true ) = 0;
 
 protected:
 	WarpType		mType;
@@ -192,7 +185,7 @@ protected:
 
 	int				mWidth;
 	int				mHeight;
-	ci::Vec2f		mWindowSize;
+	ci::vec2		mWindowSize;
 
 	float			mBrightness;
 
@@ -202,7 +195,7 @@ protected:
 	int				mControlsX;
 	int				mControlsY;
 
-	std::vector<ci::Vec2f>	mPoints;
+	std::vector<ci::vec2>	mPoints;
 
 private:
 	//! edit mode for all warps
@@ -210,9 +203,10 @@ private:
 	//! time of last control point selection
 	static double		sSelectedTime;
 	//! keep track of mouse position
-	static ci::Vec2i	sMouse;
+	static ci::ivec2	sMouse;
 
-	ci::Vec2f			mOffset;
+	ci::vec2			mOffset;
 };
 
-} } // namespace ph::warping
+}
+} // namespace ph::warping

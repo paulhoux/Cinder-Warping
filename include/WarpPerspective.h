@@ -8,15 +8,15 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  Cinder-Warping is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #pragma once
 
@@ -25,59 +25,57 @@
 
 #include "Warp.h"
 
-namespace ph { namespace warping {
+namespace ph {
+namespace warping {
 
 typedef std::shared_ptr<class WarpPerspective> WarpPerspectiveRef;
 
 class WarpPerspective
-	: public Warp
-{
+	: public Warp {
 public:
 	//
 	static WarpPerspectiveRef create() { return std::make_shared<WarpPerspective>(); }
 
 public:
-	WarpPerspective(void);
-	~WarpPerspective(void);
+	WarpPerspective( void );
+	~WarpPerspective( void );
 
 	//! returns a shared pointer to this warp
-	WarpPerspectiveRef	getPtr() { return std::static_pointer_cast<WarpPerspective>(shared_from_this()); }
+	WarpPerspectiveRef	getPtr() { return std::static_pointer_cast<WarpPerspective>( shared_from_this() ); }
 
 	//! get the transformation matrix
-	ci::Matrix44f	getTransform();
-	//! get the inverted transformation matrix (custom code, faster and more accurate than Cinder's)
-	ci::Matrix44f	getInvertedTransform();
+	ci::mat4		getTransform();
+	//! get the inverted transformation matrix
+	ci::mat4		getInvertedTransform();
 
 	//! reset control points to undistorted image
-	void			reset();
+	void			reset() override;
 	//! setup the warp before drawing its contents
-	void			begin();
+	void			begin() override;
 	//! restore the warp after drawing
-	void			end();
+	void			end() override;
 
 	//! draws a warped texture
-	void			draw(const ci::gl::Texture &texture, const ci::Area &srcArea, const ci::Rectf &destRect);
-
-	//! draws a warped texture
-	void			draw(const ci::gl::TextureRef texture, const ci::Area &srcArea, const ci::Rectf &destRect);
+	void			draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea, const ci::Rectf &destRect ) override;
 
 	//! override keyDown method to add additional key handling
-	bool			keyDown( ci::app::KeyEvent event );
+	void			keyDown( ci::app::KeyEvent &event ) override;
 
 	//! allow WarpPerspectiveBilinear to access the protected class members
 	friend class WarpPerspectiveBilinear;
 protected:
 	//!
-	void	draw(bool controls=true);
+	void	draw( bool controls = true ) override;
 	//!
-	inline	ci::Vec2f		toVec2f( const cv::Point2f &pt ) const { return ci::Vec2f( pt.x, pt.y ); };
-	inline	cv::Point2f		fromVec2f( const ci::Vec2f &pt ) const { return cv::Point2f( pt.x, pt.y ); };
+	inline	ci::vec2	toVec2f( const cv::Point2f &pt ) const { return ci::vec2( pt.x, pt.y ); };
+	inline	cv::Point2f	fromVec2f( const ci::vec2 &pt ) const { return cv::Point2f( pt.x, pt.y ); };
 protected:
-	cv::Point2f		mSource[4];
-	cv::Point2f		mDestination[4];
+	cv::Point2f	mSource[4];
+	cv::Point2f	mDestination[4];
 
-	ci::Matrix44d	mTransform;
-	ci::Matrix44d	mInverted;
+	ci::mat4	mTransform;
+	ci::mat4	mInverted;
 };
 
-} } // namespace ph::warping
+}
+} // namespace ph::warping

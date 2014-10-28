@@ -8,15 +8,15 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  Cinder-Warping is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "WarpPerspectiveBilinear.h"
 
@@ -26,10 +26,11 @@
 using namespace ci;
 using namespace ci::app;
 
-namespace ph { namespace warping {
+namespace ph {
+namespace warping {
 
-WarpPerspectiveBilinear::WarpPerspectiveBilinear(const ci::gl::Fbo::Format &format)
-	: WarpBilinear(format)
+WarpPerspectiveBilinear::WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format )
+	: WarpBilinear( format )
 {
 	// change type 
 	mType = PERSPECTIVE_BILINEAR;
@@ -47,154 +48,153 @@ XmlTree	WarpPerspectiveBilinear::toXml() const
 	XmlTree xml = WarpBilinear::toXml();
 
 	// set corners
-	for(unsigned i=0;i<4;++i) {
-		Vec2f corner = mWarp->getControlPoint(i);
+	for( unsigned i = 0; i < 4; ++i ) {
+		vec2 corner = mWarp->getControlPoint( i );
 
 		XmlTree cp;
-		cp.setTag("corner");
-		cp.setAttribute("x", corner.x);
-		cp.setAttribute("y", corner.y);
+		cp.setTag( "corner" );
+		cp.setAttribute( "x", corner.x );
+		cp.setAttribute( "y", corner.y );
 
-		xml.push_back(cp);
+		xml.push_back( cp );
 	}
 
 	return xml;
 }
 
-void WarpPerspectiveBilinear::fromXml(const XmlTree &xml)
+void WarpPerspectiveBilinear::fromXml( const XmlTree &xml )
 {
-	WarpBilinear::fromXml(xml);
+	WarpBilinear::fromXml( xml );
 
 	// get corners
 	unsigned i = 0;
-	for(XmlTree::ConstIter child=xml.begin("corner");child!=xml.end();++child) {
-		float x = child->getAttributeValue<float>("x", 0.0f);
-		float y = child->getAttributeValue<float>("y", 0.0f);
+	for( XmlTree::ConstIter child = xml.begin( "corner" ); child != xml.end(); ++child ) {
+		float x = child->getAttributeValue<float>( "x", 0.0f );
+		float y = child->getAttributeValue<float>( "y", 0.0f );
 
-		mWarp->setControlPoint(i, Vec2f(x, y));
+		mWarp->setControlPoint( i, vec2( x, y ) );
 
 		i++;
 	}
 }
 
-void WarpPerspectiveBilinear::draw(bool controls)
+void WarpPerspectiveBilinear::draw( bool controls )
 {
 	// apply perspective transform
-	gl::pushModelView();
-	gl::multModelView( mWarp->getTransform() );
+	gl::pushModelMatrix();
+	gl::multModelMatrix( mWarp->getTransform() );
 
 	// draw bilinear warp
-	WarpBilinear::draw(false);
+	WarpBilinear::draw( false );
 
 	// restore transform
-	gl::popModelView();
+	gl::popModelMatrix();
 
 	// draw edit interface
 	if( isEditModeEnabled() ) {
-		if(controls) {
+		if( controls ) {
 			// draw control points
-			for(unsigned i=0;i<mPoints.size();++i) 
-				drawControlPoint( getControlPoint(i) * mWindowSize, mSelected==i );
+			for( unsigned i = 0; i < mPoints.size(); ++i )
+				drawControlPoint( getControlPoint( i ) * mWindowSize, mSelected == i );
 		}
 	}
 }
 
-bool WarpPerspectiveBilinear::mouseMove( MouseEvent event )
+void WarpPerspectiveBilinear::mouseMove( MouseEvent &event )
 {
-	bool handled = mWarp->mouseMove( event );
-	return Warp::mouseMove( event ) || handled;
+	mWarp->mouseMove( event );
+	Warp::mouseMove( event );
 }
 
-bool WarpPerspectiveBilinear::mouseDown( MouseEvent event )
+void WarpPerspectiveBilinear::mouseDown( MouseEvent &event )
 {
-	if( ! isEditModeEnabled() ) return false;
-	if(mSelected >= mPoints.size()) return false;
+	if( !isEditModeEnabled() ) return;
+	if( mSelected >= mPoints.size() ) return;
 
 	// depending on selected control point, let perspective or bilinear warp handle it
 	if( isCorner( mSelected ) ) {
-		return mWarp->mouseDown( event );
+		mWarp->mouseDown( event );
 	}
 	else {
-		return Warp::mouseDown( event );
+		Warp::mouseDown( event );
 	}
 }
 
-bool WarpPerspectiveBilinear::mouseDrag( MouseEvent event )
+void WarpPerspectiveBilinear::mouseDrag( MouseEvent &event )
 {
-	if( !isEditModeEnabled() ) return false;
-	if(mSelected >= mPoints.size()) return false;
+	if( !isEditModeEnabled() ) return;
+	if( mSelected >= mPoints.size() ) return;
 
 	// depending on selected control point, let perspective or bilinear warp handle it
 	if( isCorner( mSelected ) ) {
-		return mWarp->mouseDrag( event );
+		mWarp->mouseDrag( event );
 	}
 	else {
-		return Warp::mouseDrag( event );
+		Warp::mouseDrag( event );
 	}
 }
 
-bool WarpPerspectiveBilinear::keyDown(KeyEvent event)
+void WarpPerspectiveBilinear::keyDown( KeyEvent &event )
 {
-	if( ! isEditModeEnabled() ) return false;
-	if(mSelected >= mPoints.size()) return false;
+	if( !isEditModeEnabled() ) return;
+	if( mSelected >= mPoints.size() ) return;
 
 	switch( event.getCode() ) {
-		case KeyEvent::KEY_UP:
-		case KeyEvent::KEY_DOWN:
-		case KeyEvent::KEY_LEFT:
-		case KeyEvent::KEY_RIGHT: {
-			// make sure cursor keys are handled by 1 warp only
-			if(!isCorner( mSelected ) || !mWarp->keyDown(event)) 
-				return WarpBilinear::keyDown( event );
-
-			return true;
-		}
+	case KeyEvent::KEY_UP:
+	case KeyEvent::KEY_DOWN:
+	case KeyEvent::KEY_LEFT:
+	case KeyEvent::KEY_RIGHT:
+		// make sure cursor keys are handled by 1 warp only
+		if( !isCorner( mSelected ) )
+			mWarp->keyDown( event );
+		if( !event.isHandled() )
+			WarpBilinear::keyDown( event );
 		break;
-		case KeyEvent::KEY_F9:
-		case KeyEvent::KEY_F10:
-			// let only the Perspective warp handle rotating 
-			return mWarp->keyDown(event);
-		case KeyEvent::KEY_F11:
-		case KeyEvent::KEY_F12:
-			// let only the Bilinear warp handle flipping
-			return WarpBilinear::keyDown( event );
-		default: 
-			{
-				// let both warps handle the other keyDown events
-				bool handled = mWarp->keyDown(event);
-				return (WarpBilinear::keyDown( event ) || handled);
-			}
-		 break;
+	case KeyEvent::KEY_F9:
+	case KeyEvent::KEY_F10:
+		// let only the Perspective warp handle rotating 
+		mWarp->keyDown( event );
+		break;
+	case KeyEvent::KEY_F11:
+	case KeyEvent::KEY_F12:
+		// let only the Bilinear warp handle flipping
+		WarpBilinear::keyDown( event );
+		break;
+	default:
+		// let both warps handle the other keyDown events
+		mWarp->keyDown( event );
+		WarpBilinear::keyDown( event );
+		break;
 	}
 }
 
-bool WarpPerspectiveBilinear::resize()
+void WarpPerspectiveBilinear::resize()
 {
 	// make content size compatible with WarpBilinear's mWindowSize
 	mWarp->setSize( getWindowSize() );
 
 	// 
-	bool handled = mWarp->resize();
-	return (WarpBilinear::resize() || handled);
+	mWarp->resize();
+	WarpBilinear::resize();
 }
 
-void WarpPerspectiveBilinear::setSize(int w, int h)
+void WarpPerspectiveBilinear::setSize( int w, int h )
 {
 	// make content size compatible with WarpBilinear's mWindowSize
 	mWarp->setSize( mWindowSize );
 
-	WarpBilinear::setSize(w, h);
+	WarpBilinear::setSize( w, h );
 }
 
-void WarpPerspectiveBilinear::setSize(const Vec2i &size)
+void WarpPerspectiveBilinear::setSize( const ivec2 &size )
 {
 	// make content size compatible with WarpBilinear's mWindowSize
 	mWarp->setSize( mWindowSize );
 
-	WarpBilinear::setSize(size);
+	WarpBilinear::setSize( size );
 }
 
-Vec2f WarpPerspectiveBilinear::getControlPoint(unsigned index) const
+vec2 WarpPerspectiveBilinear::getControlPoint( unsigned index ) const
 {
 	// depending on index, return perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -203,14 +203,17 @@ Vec2f WarpPerspectiveBilinear::getControlPoint(unsigned index) const
 	}
 	else {
 		// bilinear: transform control point from warped space to normalized screen space
-		Vec2f p = Warp::getControlPoint(index) * Vec2f( mWarp->getSize() );
-		Vec3f pt = mWarp->getTransform().transformPoint( Vec3f(p.x, p.y, 0.0f) );
+		vec2 p = Warp::getControlPoint( index ) * vec2( mWarp->getSize() );
+		vec4 pt = mWarp->getTransform() * vec4( p.x, p.y, 0, 1 );
 
-		return Vec2f(pt.x, pt.y) / mWindowSize;
+		if( pt.w != 0 ) pt.w = 1 / pt.w;
+		pt *= pt.w;
+
+		return vec2( pt.x, pt.y ) / mWindowSize;
 	}
 }
 
-void WarpPerspectiveBilinear::setControlPoint(unsigned index, const Vec2f &pos)
+void WarpPerspectiveBilinear::setControlPoint( unsigned index, const vec2 &pos )
 {
 	// depending on index, set perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -219,15 +222,18 @@ void WarpPerspectiveBilinear::setControlPoint(unsigned index, const Vec2f &pos)
 	}
 	else {
 		// bilinear:: transform control point from normalized screen space to warped space
-		Vec2f p = pos * mWindowSize;
-		Vec3f pt = mWarp->getInvertedTransform().transformPoint( Vec3f(p.x, p.y, 0.0f) );
+		vec2 p = pos * mWindowSize;
+		vec4 pt = mWarp->getInvertedTransform() * vec4( p.x, p.y, 0, 1 );
 
-		Vec2f size( mWarp->getSize() );
-		Warp::setControlPoint( index, Vec2f(pt.x, pt.y) / size );
+		if( pt.w != 0 ) pt.w = 1 / pt.w;
+		pt *= pt.w;
+
+		vec2 size( mWarp->getSize() );
+		Warp::setControlPoint( index, vec2( pt.x, pt.y ) / size );
 	}
 }
 
-void WarpPerspectiveBilinear::moveControlPoint(unsigned index, const Vec2f &shift)
+void WarpPerspectiveBilinear::moveControlPoint( unsigned index, const vec2 &shift )
 {
 	// depending on index, move perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -236,12 +242,12 @@ void WarpPerspectiveBilinear::moveControlPoint(unsigned index, const Vec2f &shif
 	}
 	else {
 		// bilinear: transform control point from normalized screen space to warped space
-		Vec2f pt = getControlPoint(index);
-		setControlPoint(index, pt + shift);
+		vec2 pt = getControlPoint( index );
+		setControlPoint( index, pt + shift );
 	}
 }
 
-void WarpPerspectiveBilinear::selectControlPoint(unsigned index)
+void WarpPerspectiveBilinear::selectControlPoint( unsigned index )
 {
 	// depending on index, select perspective or bilinear control point
 	if( isCorner( index ) ) {
@@ -252,7 +258,7 @@ void WarpPerspectiveBilinear::selectControlPoint(unsigned index)
 	}
 
 	// always select bilinear control point, which we use to keep track of editing
-	Warp::selectControlPoint( index );	
+	Warp::selectControlPoint( index );
 }
 
 void WarpPerspectiveBilinear::deselectControlPoint()
@@ -261,25 +267,26 @@ void WarpPerspectiveBilinear::deselectControlPoint()
 	Warp::deselectControlPoint();
 }
 
-bool WarpPerspectiveBilinear::isCorner(unsigned index) const
+bool WarpPerspectiveBilinear::isCorner( unsigned index ) const
 {
-	unsigned numControls = (unsigned)(mControlsX * mControlsY);
+	unsigned numControls = (unsigned) ( mControlsX * mControlsY );
 
-	return (index==0 || index==(numControls-mControlsY) || index==(numControls-1) || index==(mControlsY-1));
+	return ( index == 0 || index == ( numControls - mControlsY ) || index == ( numControls - 1 ) || index == ( mControlsY - 1 ) );
 }
 
-unsigned WarpPerspectiveBilinear::convertIndex(unsigned index) const
-{	
-	unsigned numControls = (unsigned)(mControlsX * mControlsY);
+unsigned WarpPerspectiveBilinear::convertIndex( unsigned index ) const
+{
+	unsigned numControls = (unsigned) ( mControlsX * mControlsY );
 
-	if(index == 0) return 0;
-	else if(index == (numControls-mControlsY)) return 2;
-	else if(index == (numControls-1)) return 3;
-	else if(index == (mControlsY-1)) return 1;
+	if( index == 0 ) return 0;
+	else if( index == ( numControls - mControlsY ) ) return 2;
+	else if( index == ( numControls - 1 ) ) return 3;
+	else if( index == ( mControlsY - 1 ) ) return 1;
 	else return index;
 }
 
-} } // namespace ph::warping
+}
+} // namespace ph::warping
 
 
 
