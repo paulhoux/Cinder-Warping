@@ -76,17 +76,17 @@ mat4 WarpPerspective::getTransform()
 		cv::Mat	warp = cv::getPerspectiveTransform( mSource, mDestination );
 
 		// convert to OpenGL matrix
-		mTransform[0][0] = warp.ptr<double>( 0 )[0];
-		mTransform[0][1] = warp.ptr<double>( 1 )[0];
-		mTransform[0][3] = warp.ptr<double>( 2 )[0];
+		mTransform[0][0] = (float) warp.ptr<double>( 0 )[0];
+		mTransform[0][1] = (float) warp.ptr<double>( 1 )[0];
+		mTransform[0][3] = (float) warp.ptr<double>( 2 )[0];
 
-		mTransform[1][0] = warp.ptr<double>( 0 )[1];
-		mTransform[1][1] = warp.ptr<double>( 1 )[1];
-		mTransform[1][3] = warp.ptr<double>( 2 )[1];
+		mTransform[1][0] = (float) warp.ptr<double>( 0 )[1];
+		mTransform[1][1] = (float) warp.ptr<double>( 1 )[1];
+		mTransform[1][3] = (float) warp.ptr<double>( 2 )[1];
 
-		mTransform[3][0] = warp.ptr<double>( 0 )[2];
-		mTransform[3][1] = warp.ptr<double>( 1 )[2];
-		mTransform[3][3] = warp.ptr<double>( 2 )[2];
+		mTransform[3][0] = (float) warp.ptr<double>( 0 )[2];
+		mTransform[3][1] = (float) warp.ptr<double>( 1 )[2];
+		mTransform[3][3] = (float) warp.ptr<double>( 2 )[2];
 
 		// update the inverted matrix
 		getInvertedTransform();
@@ -124,12 +124,11 @@ void WarpPerspective::draw( const gl::Texture2dRef &texture, const Area &srcArea
 	clip( area, rect );
 
 	// save current drawing color
-	gl::ScopedColor color();
+	const ColorA &currentColor = gl::context()->getCurrentColor();
+	gl::ScopedColor color( currentColor );
 
 	// adjust brightness
 	if( mBrightness < 1.f ) {
-		const ColorA &currentColor = gl::context()->getCurrentColor();
-
 		ColorA drawColor = mBrightness * currentColor;
 		drawColor.a = currentColor.a;
 
