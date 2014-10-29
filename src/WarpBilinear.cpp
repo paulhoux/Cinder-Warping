@@ -158,7 +158,7 @@ void WarpBilinear::begin()
 	mFbo->bindFramebuffer();
 
 	// store current viewport and set viewport to frame buffer size
-	//glPushAttrib( GL_VIEWPORT_BIT );
+	gl::pushViewport( gl::getViewport() );
 	gl::viewport( ivec2( 0 ), mFbo->getSize() );
 
 	// set window matrices
@@ -174,7 +174,7 @@ void WarpBilinear::end()
 	gl::popMatrices();
 
 	// restore viewport
-	//glPopAttrib();
+	gl::popViewport();
 
 	// unbind frame buffer
 	mFbo->unbindFramebuffer();
