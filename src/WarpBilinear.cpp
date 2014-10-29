@@ -216,14 +216,9 @@ void WarpBilinear::draw( bool controls )
 	if( isEditModeEnabled() ) {
 		gl::ScopedGlslProg shader( gl::context()->getStockShader( gl::ShaderDef().color() ) );
 
-		/*// draw wireframe
-		gl::color( ColorA( 1, 1, 1, 0.5f ) );
-		gl::enableAlphaBlending();
-		gl::enableWireframe();
-		gl::draw( mVboMesh );
-		gl::disableAlphaBlending();
-		gl::disableWireframe();
-		//*/
+		// draw wireframe
+		gl::color( ColorA( 1, 1, 1 ) );
+		gl::draw( mVboMeshWired );
 
 		if( controls ) {
 			// draw control points
@@ -392,7 +387,7 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	layout.interleave( false );
 	layout.attrib( geom::POSITION, 3 );
 	layout.attrib( geom::TEX_COORD_0, 2 );
-	layout.usage( GL_DYNAMIC_DRAW );
+	layout.usage( GL_STATIC_DRAW );
 
 	//
 	mVboMesh = gl::VboMesh::create( numVertices, GL_TRIANGLES, { layout }, numIndices, GL_UNSIGNED_INT );
@@ -401,8 +396,11 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	// buffer static data
 	int i = 0;
 	int j = 0;
+
+	std::vector<vec3>		positions;
 	std::vector<uint32_t>	indices( numIndices );
 	std::vector<vec2>		texCoords( numVertices );
+
 	for( int x = 0; x < resolutionX; ++x ) {
 		for( int y = 0; y < resolutionY; ++y ) {
 			// index
@@ -421,17 +419,45 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 			texCoords[j++] = vec2( tx, ty );
 		}
 	}
-	mVboMesh->bufferIndices( indices.size() * sizeof( uint32_t ), indices.data() );
-	mVboMesh->bufferAttrib( geom::TEX_COORD_0, texCoords.size() * sizeof( vec2 ), texCoords.data() );
 
-	//
-	std::vector<vec3>	positions;
 	positions.resize( mResolutionX * mResolutionY );
 	mVboMesh->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
+	mVboMesh->bufferAttrib( geom::TEX_COORD_0, texCoords.size() * sizeof( vec2 ), texCoords.data() );
+	mVboMesh->bufferIndices( indices.size() * sizeof( uint32_t ), indices.data() );
+
+	// create wireframe mesh as well
+	numIndices = resolutionX * ( resolutionY - 1 ) * 2 + resolutionY * ( resolutionX - 1 ) * 2;
+
+	mVboMeshWired = gl::VboMesh::create( numVertices, GL_LINES, { layout }, numIndices, GL_UNSIGNED_INT );
+	if( !mVboMesh ) return;
+
+	indices.resize( numIndices );
+
+	i = 0;
+	for( int x = 0; x < resolutionX; ++x ) {
+		for( int y = 0; y < resolutionY - 1; ++y ) {
+			indices[i++] = ( x + 0 ) * resolutionY + ( y + 0 );
+			indices[i++] = ( x + 0 ) * resolutionY + ( y + 1 );
+		}
+	}
+	for( int y = 0; y < resolutionY; ++y ) {
+		for( int x = 0; x < resolutionX - 1; ++x ) {
+			indices[i++] = ( x + 0 ) * resolutionY + ( y + 0 );
+			indices[i++] = ( x + 1 ) * resolutionY + ( y + 0 );
+		}
+	}
+
+	mVboMeshWired->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
+	mVboMeshWired->bufferAttrib( geom::TEX_COORD_0, texCoords.size() * sizeof( vec2 ), texCoords.data() );
+	mVboMeshWired->bufferIndices( indices.size() * sizeof( uint32_t ), indices.data() );
+
 
 	//
 	mIsDirty = true;
 }
+
+// Mapped buffer seems to be a *tiny* bit faster.
+#define USE_MAPPED_BUFFER 1
 
 void WarpBilinear::updateMesh()
 {
@@ -443,9 +469,15 @@ void WarpBilinear::updateMesh()
 	int				col, row;
 
 	std::vector<vec2>	cols, rows;
-	
-	auto mapped = mVboMesh->mapAttrib3f( geom::POSITION, false );
+
+#if USE_MAPPED_BUFFER
+	auto mappedMesh = mVboMesh->mapAttrib3f( geom::POSITION, false );
+	auto mappedMeshWired = mVboMeshWired->mapAttrib3f( geom::POSITION, false );
+#else
+	std::vector<vec3> positions( mResolutionX * mResolutionY );
 	int index = 0;
+#endif
+
 	for( int x = 0; x < mResolutionX; ++x ) {
 		for( int y = 0; y < mResolutionY; ++y ) {
 			// transform coordinates to [0..numControls]
@@ -479,12 +511,25 @@ void WarpBilinear::updateMesh()
 				p = cubicInterpolate( rows, u ) * mWindowSize;
 			}
 
-			*mapped++ = vec3( p.x, p.y, 0 );
+#if USE_MAPPED_BUFFER
+			*mappedMesh++ = *mappedMeshWired++ = vec3( p.x, p.y, 0 );
+#else
+			positions[index++] = vec3( p.x, p.y, 0 );
+#endif
+
 		}
 	}
-	mapped.unmap();
+
+#if USE_MAPPED_BUFFER
+	mappedMeshWired.unmap();
+	mappedMesh.unmap();
+#else
+	mVboMesh->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
+	mVboMeshWired->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
+#endif
 
 	mBatch = gl::Batch::create( mVboMesh, gl::context()->getStockShader( gl::ShaderDef().texture().color() ) );
+	mBatchWired = gl::Batch::create( mVboMeshWired, gl::context()->getStockShader( gl::ShaderDef().color() ) );
 
 	mIsDirty = false;
 }

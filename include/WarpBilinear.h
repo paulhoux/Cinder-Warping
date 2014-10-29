@@ -97,6 +97,9 @@ protected:
 	ci::gl::VboMeshRef		mVboMesh;
 	ci::gl::BatchRef		mBatch;
 
+	ci::gl::VboMeshRef		mVboMeshWired;
+	ci::gl::BatchRef		mBatchWired;
+
 	//! linear or curved interpolation
 	bool					mIsLinear;
 	//!
