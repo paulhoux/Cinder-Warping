@@ -188,8 +188,9 @@ void WarpBilinear::end()
 
 void WarpBilinear::draw( bool controls )
 {
-	createBuffers();
+	createShader();
 
+	createBuffers();
 	if( !mVboMesh ) return;
 
 	// save current texture mode, drawing color, line width and depth buffer state
@@ -210,15 +211,21 @@ void WarpBilinear::draw( bool controls )
 	}
 
 	// draw textured mesh
+	if( isEditModeEnabled() ) {
+		gl::ScopedGlslProg shader( mShader );
+		mShader->uniform( "uTex0", 0 );
+		mShader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
+		mBatch->setGlslProg( mShader );
+	}
+	else {
+		mBatch->setGlslProg( gl::context()->getStockShader( gl::ShaderDef().texture() ) );
+	}
+
 	mBatch->draw();
 
 	// draw edit interface
 	if( isEditModeEnabled() ) {
 		gl::ScopedGlslProg shader( gl::context()->getStockShader( gl::ShaderDef().color() ) );
-
-		// draw wireframe
-		gl::color( ColorA( 1, 1, 1 ) );
-		gl::draw( mVboMeshWired );
 
 		if( controls ) {
 			// draw control points
@@ -425,33 +432,6 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	mVboMesh->bufferAttrib( geom::TEX_COORD_0, texCoords.size() * sizeof( vec2 ), texCoords.data() );
 	mVboMesh->bufferIndices( indices.size() * sizeof( uint32_t ), indices.data() );
 
-	// create wireframe mesh as well
-	numIndices = resolutionX * ( resolutionY - 1 ) * 2 + resolutionY * ( resolutionX - 1 ) * 2;
-
-	mVboMeshWired = gl::VboMesh::create( numVertices, GL_LINES, { layout }, numIndices, GL_UNSIGNED_INT );
-	if( !mVboMesh ) return;
-
-	indices.resize( numIndices );
-
-	i = 0;
-	for( int x = 0; x < resolutionX; ++x ) {
-		for( int y = 0; y < resolutionY - 1; ++y ) {
-			indices[i++] = ( x + 0 ) * resolutionY + ( y + 0 );
-			indices[i++] = ( x + 0 ) * resolutionY + ( y + 1 );
-		}
-	}
-	for( int y = 0; y < resolutionY; ++y ) {
-		for( int x = 0; x < resolutionX - 1; ++x ) {
-			indices[i++] = ( x + 0 ) * resolutionY + ( y + 0 );
-			indices[i++] = ( x + 1 ) * resolutionY + ( y + 0 );
-		}
-	}
-
-	mVboMeshWired->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
-	mVboMeshWired->bufferAttrib( geom::TEX_COORD_0, texCoords.size() * sizeof( vec2 ), texCoords.data() );
-	mVboMeshWired->bufferIndices( indices.size() * sizeof( uint32_t ), indices.data() );
-
-
 	//
 	mIsDirty = true;
 }
@@ -472,7 +452,6 @@ void WarpBilinear::updateMesh()
 
 #if USE_MAPPED_BUFFER
 	auto mappedMesh = mVboMesh->mapAttrib3f( geom::POSITION, false );
-	auto mappedMeshWired = mVboMeshWired->mapAttrib3f( geom::POSITION, false );
 #else
 	std::vector<vec3> positions( mResolutionX * mResolutionY );
 	int index = 0;
@@ -512,7 +491,7 @@ void WarpBilinear::updateMesh()
 			}
 
 #if USE_MAPPED_BUFFER
-			*mappedMesh++ = *mappedMeshWired++ = vec3( p.x, p.y, 0 );
+			*mappedMesh++ = vec3( p.x, p.y, 0 );
 #else
 			positions[index++] = vec3( p.x, p.y, 0 );
 #endif
@@ -521,15 +500,12 @@ void WarpBilinear::updateMesh()
 	}
 
 #if USE_MAPPED_BUFFER
-	mappedMeshWired.unmap();
 	mappedMesh.unmap();
 #else
 	mVboMesh->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
-	mVboMeshWired->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
 #endif
 
-	mBatch = gl::Batch::create( mVboMesh, gl::context()->getStockShader( gl::ShaderDef().texture().color() ) );
-	mBatchWired = gl::Batch::create( mVboMeshWired, gl::context()->getStockShader( gl::ShaderDef().color() ) );
+	mBatch = gl::Batch::create( mVboMesh, mShader );
 
 	mIsDirty = false;
 }
@@ -683,6 +659,67 @@ void WarpBilinear::setNumControlY( int n )
 	mControlsY = n;
 
 	mIsDirty = true;
+}
+
+void WarpBilinear::createShader()
+{
+	if( mShader )
+		return;
+
+	gl::GlslProg::Format fmt;
+	fmt.vertex(
+		"#version 150\n"
+		""
+		"uniform mat4 ciModelViewProjection;\n"
+		""
+		"in vec4 ciPosition;\n"
+		"in vec2 ciTexCoord0;\n"
+		"in vec4 ciColor;\n"
+		""
+		"out vec2 vTexCoord0;\n"
+		"out vec4 vColor;\n"
+		""
+		"void main(void) {\n"
+		"	vColor = ciColor;\n"
+		"	vTexCoord0 = ciTexCoord0;\n"
+		""
+		"	gl_Position = ciModelViewProjection * ciPosition;\n"
+		"}"
+		);
+	fmt.fragment(
+		"#version 150\n"
+		""
+		"uniform sampler2D uTex0;\n"
+		"uniform vec4 uExtends;\n"
+		""
+		"in vec2 vTexCoord0;\n"
+		"in vec4 vColor;\n"
+		""
+		"out vec4 oColor;\n"
+		""
+		"float grid( in vec2 uv, in vec2 size )\n"
+		"{\n"
+		"	const float kLineWidth = 2.0;\n"
+		"	float x = 1.0 - step( kLineWidth, mod( uv.x + 0.5 * kLineWidth, size.x ) );\n"
+		"	float y = 1.0 - step( kLineWidth, mod( uv.y + 0.5 * kLineWidth, size.y ) );\n"
+		"	return step( 1.0, x + y );\n"
+		"}\n"
+		""
+		"void main(void) {"
+		"	vec4 gridColor = vec4( 1 );\n"
+		"	vec4 texColor = texture( uTex0, vTexCoord0 );\n"
+		""
+		"	float f = grid(vTexCoord0.xy * uExtends.xy, uExtends.zw );\n"
+		"	oColor = mix( texColor, gridColor, f );\n"
+		"}"
+		);
+
+	try {
+		mShader = gl::GlslProg::create( fmt );
+	}
+	catch( const std::exception &e ) {
+		console() << e.what() << std::endl;
+	}
 }
 
 Rectf WarpBilinear::getMeshBounds() const

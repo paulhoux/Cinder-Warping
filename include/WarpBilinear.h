@@ -76,6 +76,8 @@ public:
 protected:
 	//! draws the warp as a mesh, allowing you to use your own texture instead of the FBO
 	virtual void		draw( bool controls = true ) override;
+	//! Creates the shader that renders the content with a wireframe overlay
+	void				createShader();
 	//! Creates the frame buffer object and updates the vertex buffer object if necessary
 	void				createBuffers();
 	//! Creates the vertex buffer object
@@ -95,10 +97,8 @@ protected:
 	ci::gl::FboRef			mFbo;
 	ci::gl::Fbo::Format		mFboFormat;
 	ci::gl::VboMeshRef		mVboMesh;
+	ci::gl::GlslProgRef		mShader;
 	ci::gl::BatchRef		mBatch;
-
-	ci::gl::VboMeshRef		mVboMeshWired;
-	ci::gl::BatchRef		mBatchWired;
 
 	//! linear or curved interpolation
 	bool					mIsLinear;
