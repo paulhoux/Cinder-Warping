@@ -215,10 +215,10 @@ void WarpBilinear::draw( bool controls )
 		gl::ScopedGlslProg shader( mShader );
 		mShader->uniform( "uTex0", 0 );
 		mShader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
-		mBatch->setGlslProg( mShader );
+		mBatch->replaceGlslProg( mShader );
 	}
 	else {
-		mBatch->setGlslProg( gl::context()->getStockShader( gl::ShaderDef().texture() ) );
+		mBatch->replaceGlslProg( gl::context()->getStockShader( gl::ShaderDef().texture() ) );
 	}
 
 	mBatch->draw();
