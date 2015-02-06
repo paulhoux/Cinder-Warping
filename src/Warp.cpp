@@ -470,23 +470,27 @@ void Warp::keyDown( KeyEvent &event )
 	}
 	else return;
 
-	// do not listen to key input if not selected
-	if( mSelected >= mPoints.size() ) return;
-
 	switch( event.getCode() ) {
 	case KeyEvent::KEY_TAB:
 		// select the next or previous (+SHIFT) control point
-		if( event.isShiftDown() ) {
-			if( mSelected == 0 )
-				mSelected = (int) mPoints.size() - 1;
-			else
-				--mSelected;
+		if ( mSelected >= mPoints.size() ) {
+			mSelected = 0;
 			selectControlPoint( mSelected );
 		}
-		else {
-			++mSelected;
-			if( mSelected >= mPoints.size() ) mSelected = 0;
-			selectControlPoint( mSelected );
+		else
+		{
+			if( event.isShiftDown() ) {
+				if( mSelected == 0 )
+					mSelected = (int) mPoints.size() - 1;
+				else
+					--mSelected;
+				selectControlPoint( mSelected );
+			}
+			else {
+				++mSelected;
+				if( mSelected >= mPoints.size() ) mSelected = 0;
+				selectControlPoint( mSelected );
+			}
 		}
 		break;
 	case KeyEvent::KEY_UP: {

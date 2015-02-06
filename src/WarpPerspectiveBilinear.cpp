@@ -137,13 +137,13 @@ void WarpPerspectiveBilinear::mouseDrag( MouseEvent &event )
 void WarpPerspectiveBilinear::keyDown( KeyEvent &event )
 {
 	if( !isEditModeEnabled() ) return;
-	if( mSelected >= mPoints.size() ) return;
 
 	switch( event.getCode() ) {
 	case KeyEvent::KEY_UP:
 	case KeyEvent::KEY_DOWN:
 	case KeyEvent::KEY_LEFT:
 	case KeyEvent::KEY_RIGHT:
+		if( mSelected >= mPoints.size() ) return;
 		// make sure cursor keys are handled by 1 warp only
 		if( !isCorner( mSelected ) )
 			mWarp->keyDown( event );
