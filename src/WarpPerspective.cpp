@@ -37,11 +37,12 @@ WarpPerspective::WarpPerspective( void )
 	//
 	mSource[0].x = 0.0f;
 	mSource[0].y = 0.0f;
-	mSource[1].x = (float) mWidth;
-	mSource[1].y = 0.0f;
+	mSource[1].x = 0.0f;
+	mSource[1].y = (float) mHeight;
 	mSource[2].x = (float) mWidth;
-	mSource[2].y = (float) mHeight;
-	mSource[3].x = 0.0f;
+	mSource[2].y = 0.0f;
+	mSource[2].x = (float) mWidth;
+	mSource[3].x = (float) mWidth;
 	mSource[3].y = (float) mHeight;
 
 	//
@@ -57,9 +58,9 @@ mat4 WarpPerspective::getTransform()
 	// calculate warp matrix using OpenCV
 	if( mIsDirty ) {
 		// update source size
-		mSource[1].x = (float) mWidth;
 		mSource[2].x = (float) mWidth;
-		mSource[2].y = (float) mHeight;
+		mSource[3].x = (float)mWidth;
+		mSource[1].y = (float) mHeight;
 		mSource[3].y = (float) mHeight;
 
 		// convert corners to actual destination pixels
@@ -109,9 +110,9 @@ void WarpPerspective::reset()
 {
 	mPoints.clear();
 	mPoints.push_back( vec2( 0.0f, 0.0f ) );
+	mPoints.push_back( vec2( 0.0f, 1.0f ) );
 	mPoints.push_back( vec2( 1.0f, 0.0f ) );
 	mPoints.push_back( vec2( 1.0f, 1.0f ) );
-	mPoints.push_back( vec2( 0.0f, 1.0f ) );
 
 	mIsDirty = true;
 }
