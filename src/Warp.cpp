@@ -24,7 +24,7 @@
 #include "WarpPerspectiveBilinear.h"
 
 #include "cinder/Xml.h"
-#include "cinder/app/AppBasic.h"
+#include "cinder/app/App.h"
 #include "cinder/gl/Texture.h"
 
 using namespace ci;
@@ -558,7 +558,7 @@ void Warp::drawControlPoint( const vec2 &pt, bool selected, bool attached )
 void Warp::drawControlPoint( const vec2 &pt, const Color &clr, float scale )
 {
 	// enable alpha blending, disable textures
-	gl::ScopedAlphaBlend blend( false );
+	gl::ScopedBlendAlpha blend;
 	glDisable( GL_TEXTURE_2D );
 
 	glLineWidth( 1.0f );
