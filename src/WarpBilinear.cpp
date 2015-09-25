@@ -26,33 +26,7 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/Xml.h"
 
-// Cinder does not provide comparison operators on gl::Fbo::Format
-
-bool operator==( const ci::gl::Fbo::Format& a, const ci::gl::Fbo::Format& b )
-{
-	/*
-	if( a.getTarget() != b.getTarget() ) return false;
-	if( a.getColorInternalFormat() != b.getColorInternalFormat() ) return false;
-	if( a.getDepthInternalFormat() != b.getDepthInternalFormat() ) return false;
-	if( a.hasColorBuffer() != b.hasColorBuffer() ) return false;
-	if( a.getNumColorBuffers() != b.getNumColorBuffers() ) return false;
-	if( a.hasDepthBuffer() != b.hasDepthBuffer() ) return false;
-	if( a.hasDepthBufferTexture() != b.hasDepthBufferTexture() ) return false;
-	if( a.getSamples() != b.getSamples() ) return false;
-	if( a.getCoverageSamples() != b.getCoverageSamples() ) return false;
-	if( a.hasMipMapping() != b.hasMipMapping() ) return false;
-	*/
-	// mWrapS, mWrapT, mMinFilter, mMagFilter are not accessible
-
-	return true;
-}
-
-bool operator!=( const ci::gl::Fbo::Format& a, const ci::gl::Fbo::Format& b )
-{
-	return !( a == b );
-}
-
-//
+ //
 
 using namespace ci;
 using namespace ci::app;
@@ -93,14 +67,6 @@ void WarpBilinear::fromXml( const XmlTree &xml )
 	mIsAdaptive = xml.getAttributeValue<bool>( "adaptive", false );
 }
 
-void WarpBilinear::setFormat( const gl::Fbo::Format &format )
-{
-	mFboFormat = format;
-
-	// invalidate current frame buffer
-	mFbo.reset();
-}
-
 void WarpBilinear::reset()
 {
 	mPoints.clear();
@@ -127,7 +93,7 @@ void WarpBilinear::draw( const gl::Texture2dRef &texture, const Area &srcArea, c
 	float h = static_cast<float>( texture->getHeight() );
 
 	if( texture->getTarget() == GL_TEXTURE_RECTANGLE_ARB )
-		setTexCoords( (float) area.x1, (float) area.y1, (float) area.x2, (float) area.y2 );
+		setTexCoords( (float)area.x1, (float)area.y1, (float)area.x2, (float)area.y2 );
 	else
 		setTexCoords( area.x1 / w, area.y1 / h, area.x2 / w, area.y2 / h );
 
@@ -139,24 +105,23 @@ void WarpBilinear::begin()
 {
 	// check if the FBO was created and is of the correct size
 	if( !mFbo ) {
-		try { mFbo = gl::Fbo::create( mWidth, mHeight, mFboFormat ); }
-		catch( ... ) {
-			// try creating Fbo with default format settings
-			try { mFbo = gl::Fbo::create( mWidth, mHeight ); }
-			catch( ... ) { return; }
+		try {
+			mFbo = gl::Fbo::create( mWidth, mHeight, mFboFormat );
 		}
-	}
-	else if( mFbo->getWidth() != mWidth || mFbo->getHeight() != mHeight || mFbo->getFormat() != mFboFormat ) {
-		try { mFbo = gl::Fbo::create( mWidth, mHeight, mFboFormat ); }
 		catch( ... ) {
 			// try creating Fbo with default format settings
-			try { mFbo = gl::Fbo::create( mWidth, mHeight ); }
-			catch( ... ) { return; }
+			try {
+				mFbo = gl::Fbo::create( mWidth, mHeight );
+			}
+			catch( ... ) {
+				return;
+			}
 		}
 	}
 
 	// bind the frame buffer so we can draw to the FBO
-	mFbo->bindFramebuffer();
+	auto ctx = gl::context();
+	ctx->pushFramebuffer( mFbo );
 
 	// store current viewport and set viewport to frame buffer size
 	gl::pushViewport( gl::getViewport() );
@@ -178,7 +143,8 @@ void WarpBilinear::end()
 	gl::popViewport();
 
 	// unbind frame buffer
-	mFbo->unbindFramebuffer();
+	auto ctx = gl::context();
+	ctx->popFramebuffer();
 
 	// draw flipped
 	Area srcArea = mFbo->getBounds();
@@ -250,90 +216,90 @@ void WarpBilinear::keyDown( KeyEvent &event )
 	if( mSelected >= mPoints.size() ) return;
 
 	switch( event.getCode() ) {
-	case KeyEvent::KEY_F1:
-		// reduce the number of horizontal control points
-		if( !event.isShiftDown() )
-			setNumControlX( ( mControlsX + 1 ) / 2 );
-		else setNumControlX( mControlsX - 1 );
-		break;
-	case KeyEvent::KEY_F2:
-		// increase the number of horizontal control points
-		if( !event.isShiftDown() )
-			setNumControlX( 2 * mControlsX - 1 );
-		else setNumControlX( mControlsX + 1 );
-		break;
-	case KeyEvent::KEY_F3:
-		// reduce the number of vertical control points
-		if( !event.isShiftDown() )
-			setNumControlY( ( mControlsY + 1 ) / 2 );
-		else setNumControlY( mControlsY - 1 );
-		break;
-	case KeyEvent::KEY_F4:
-		// increase the number of vertical control points
-		if( !event.isShiftDown() )
-			setNumControlY( 2 * mControlsY - 1 );
-		else setNumControlY( mControlsY + 1 );
-		break;
-	case KeyEvent::KEY_m:
-		// toggle between linear and curved mapping
-		mIsLinear = !mIsLinear;
-		mIsDirty = true;
-		break;
-	case KeyEvent::KEY_F5:
-		// decrease the mesh resolution
-		if( mResolution < 64 ) {
-			mResolution += 4;
+		case KeyEvent::KEY_F1:
+			// reduce the number of horizontal control points
+			if( !event.isShiftDown() )
+				setNumControlX( ( mControlsX + 1 ) / 2 );
+			else setNumControlX( mControlsX - 1 );
+			break;
+		case KeyEvent::KEY_F2:
+			// increase the number of horizontal control points
+			if( !event.isShiftDown() )
+				setNumControlX( 2 * mControlsX - 1 );
+			else setNumControlX( mControlsX + 1 );
+			break;
+		case KeyEvent::KEY_F3:
+			// reduce the number of vertical control points
+			if( !event.isShiftDown() )
+				setNumControlY( ( mControlsY + 1 ) / 2 );
+			else setNumControlY( mControlsY - 1 );
+			break;
+		case KeyEvent::KEY_F4:
+			// increase the number of vertical control points
+			if( !event.isShiftDown() )
+				setNumControlY( 2 * mControlsY - 1 );
+			else setNumControlY( mControlsY + 1 );
+			break;
+		case KeyEvent::KEY_m:
+			// toggle between linear and curved mapping
+			mIsLinear = !mIsLinear;
+			mIsDirty = true;
+			break;
+		case KeyEvent::KEY_F5:
+			// decrease the mesh resolution
+			if( mResolution < 64 ) {
+				mResolution += 4;
+				mIsDirty = true;
+			}
+			break;
+		case KeyEvent::KEY_F6:
+			// increase the mesh resolution
+			if( mResolution > 4 ) {
+				mResolution -= 4;
+				mIsDirty = true;
+			}
+			break;
+		case KeyEvent::KEY_F7:
+			// toggle adaptive mesh resolution
+			mIsAdaptive = !mIsAdaptive;
+			mIsDirty = true;
+			break;
+		case KeyEvent::KEY_F9:
+			// rotate content ccw
+			break;
+		case KeyEvent::KEY_F10:
+			// rotate content cw
+			break;
+		case KeyEvent::KEY_F11:
+		{
+			// flip control points horizontally
+			std::vector<vec2> points;
+			for( int x = mControlsX - 1; x >= 0; --x ) {
+				for( int y = 0; y < mControlsY; ++y ) {
+					int i = ( x * mControlsY + y );
+					points.push_back( mPoints[i] );
+				}
+			}
+			mPoints = points;
 			mIsDirty = true;
 		}
 		break;
-	case KeyEvent::KEY_F6:
-		// increase the mesh resolution
-		if( mResolution > 4 ) {
-			mResolution -= 4;
+		case KeyEvent::KEY_F12:
+		{
+			// flip control points vertically
+			std::vector<vec2> points;
+			for( int x = 0; x < mControlsX; ++x ) {
+				for( int y = mControlsY - 1; y >= 0; --y ) {
+					int i = ( x * mControlsY + y );
+					points.push_back( mPoints[i] );
+				}
+			}
+			mPoints = points;
 			mIsDirty = true;
 		}
 		break;
-	case KeyEvent::KEY_F7:
-		// toggle adaptive mesh resolution
-		mIsAdaptive = !mIsAdaptive;
-		mIsDirty = true;
-		break;
-	case KeyEvent::KEY_F9:
-		// rotate content ccw
-		break;
-	case KeyEvent::KEY_F10:
-		// rotate content cw
-		break;
-	case KeyEvent::KEY_F11:
-	{
-		// flip control points horizontally
-		std::vector<vec2> points;
-		for( int x = mControlsX - 1; x >= 0; --x ) {
-			for( int y = 0; y < mControlsY; ++y ) {
-				int i = ( x * mControlsY + y );
-				points.push_back( mPoints[i] );
-			}
-		}
-		mPoints = points;
-		mIsDirty = true;
-	}
-		break;
-	case KeyEvent::KEY_F12:
-	{
-		// flip control points vertically
-		std::vector<vec2> points;
-		for( int x = 0; x < mControlsX; ++x ) {
-			for( int y = mControlsY - 1; y >= 0; --y ) {
-				int i = ( x * mControlsY + y );
-				points.push_back( mPoints[i] );
-			}
-		}
-		mPoints = points;
-		mIsDirty = true;
-	}
-		break;
-	default:
-		return;
+		default:
+			return;
 	}
 
 	event.setHandled( true );
@@ -346,7 +312,7 @@ void WarpBilinear::createBuffers()
 			// determine a suitable mesh resolution based on width/height of the window
 			// and the size of the mesh in pixels
 			Rectf rect = getMeshBounds();
-			createMesh( (int) ( rect.getWidth() / mResolution ), (int) ( rect.getHeight() / mResolution ) );
+			createMesh( (int)( rect.getWidth() / mResolution ), (int)( rect.getHeight() / mResolution ) );
 		}
 		else {
 			// use a fixed mesh resolution
@@ -422,8 +388,8 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 				indices[i++] = ( x + 0 ) * resolutionY + ( y + 1 );
 			}
 			// texCoords
-			float tx = lerp<float, float>( mX1, mX2, x / (float) ( resolutionX - 1 ) );
-			float ty = lerp<float, float>( mY1, mY2, y / (float) ( resolutionY - 1 ) );
+			float tx = lerp<float, float>( mX1, mX2, x / (float)( resolutionX - 1 ) );
+			float ty = lerp<float, float>( mY1, mY2, y / (float)( resolutionY - 1 ) );
 			texCoords[j++] = vec2( tx, ty );
 		}
 	}
@@ -461,12 +427,12 @@ void WarpBilinear::updateMesh()
 	for( int x = 0; x < mResolutionX; ++x ) {
 		for( int y = 0; y < mResolutionY; ++y ) {
 			// transform coordinates to [0..numControls]
-			u = x * ( mControlsX - 1 ) / (float) ( mResolutionX - 1 );
-			v = y * ( mControlsY - 1 ) / (float) ( mResolutionY - 1 );
+			u = x * ( mControlsX - 1 ) / (float)( mResolutionX - 1 );
+			v = y * ( mControlsY - 1 ) / (float)( mResolutionY - 1 );
 
 			// determine col and row
-			col = (int) ( u );
-			row = (int) ( v );
+			col = (int)( u );
+			row = (int)( v );
 
 			// normalize coordinates to [0..1]
 			u -= col;
@@ -532,7 +498,7 @@ vec2 WarpBilinear::cubicInterpolate( const std::vector<vec2> &knots, float t ) c
 	assert( knots.size() >= 4 );
 
 	return knots[1] + 0.5f * t*( knots[2] - knots[0] + t*( 2.0f*knots[0] - 5.0f*knots[1] +
-		4.0f*knots[2] - knots[3] + t*( 3.0f*( knots[1] - knots[2] ) + knots[3] - knots[0] ) ) );
+														   4.0f*knots[2] - knots[3] + t*( 3.0f*( knots[1] - knots[2] ) + knots[3] - knots[0] ) ) );
 }
 
 void WarpBilinear::setNumControlX( int n )

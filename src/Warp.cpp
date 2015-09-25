@@ -32,9 +32,9 @@ using namespace ci::app;
 namespace ph {
 namespace warping {
 
-bool	Warp::sIsEditMode = false;
-double	Warp::sSelectedTime = 0.0;
-ivec2	Warp::sMouse = ivec2( 0, 0 );
+std::atomic<bool>	Warp::sIsEditMode = false;
+std::atomic<double>	Warp::sSelectedTime = 0.0;
+std::atomic<ivec2>	Warp::sMouse = ivec2( 0, 0 );
 
 Warp::Warp( WarpType type ) :
 mType( type ),
@@ -173,14 +173,6 @@ void Warp::setSize( int w, int h )
 	mIsDirty = true;
 }
 
-void Warp::setSize( const ivec2 &size )
-{
-	mWidth = size.x;
-	mHeight = size.y;
-
-	mIsDirty = true;
-}
-
 vec2 Warp::getControlPoint( unsigned index ) const
 {
 	if( index >= mPoints.size() ) return vec2( 0 );
@@ -263,10 +255,10 @@ void Warp::selectClosestControlPoint( const WarpList &warps, const ivec2 &positi
 	}
 }
 
-void Warp::setSize( const WarpList &warps, const ivec2 &size )
+void Warp::setSize( const WarpList &warps, int w, int h )
 {
 	for( WarpConstIter itr = warps.begin(); itr != warps.end(); ++itr )
-		( *itr )->setSize( size );
+		( *itr )->setSize( w, h );
 }
 
 WarpList Warp::readSettings( const DataSourceRef &source )

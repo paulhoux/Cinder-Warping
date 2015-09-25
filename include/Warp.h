@@ -30,6 +30,7 @@
 
 #include "cinder/gl/gl.h"
 
+#include <atomic>
 #include <vector>
 
  // forward declarations
@@ -69,7 +70,7 @@ public:
 	virtual ~Warp( void );
 
 	//!
-	static bool			isEditModeEnabled() { return sIsEditMode; };
+	static bool			isEditModeEnabled() { return (bool)sIsEditMode; };
 	static void			enableEditMode( bool enabled = true ) { sIsEditMode = enabled; };
 	static void			disableEditMode() { sIsEditMode = false; };
 	static void			toggleEditMode() { sIsEditMode = !sIsEditMode; };
@@ -99,9 +100,9 @@ public:
 	//! set the height of the content in pixels
 	virtual void		setHeight( int h ) { setSize( mWidth, h ); }
 	//! set the width and height of the content in pixels
-	virtual void		setSize( int w, int h );
+	virtual void		setSize( const ci::ivec2 &size ) { setSize( size.x, size.y ); }
 	//! set the width and height of the content in pixels
-	virtual void		setSize( const ci::ivec2 &size );
+	virtual void		setSize( int w, int h );
 
 	//! reset control points to undistorted image
 	virtual void		reset() = 0;
@@ -134,8 +135,9 @@ public:
 	virtual unsigned	findControlPoint( const ci::vec2 &pos, float *distance ) const;
 
 	//! set the width and height in pixels of the content of all warps
-	static void			setSize( const WarpList &warps, int w, int h ) { setSize( warps, ci::ivec2( w, h ) ); }
-	static void			setSize( const WarpList &warps, const ci::ivec2 &size );
+	static void			setSize( const WarpList &warps, int w, int h );
+	//! set the width and height in pixels of the content of all warps
+	static void			setSize( const WarpList &warps, const ci::ivec2 &size ) { setSize( warps, size.x, size.y ); }
 
 	//! checks all warps and selects the closest control point
 	static void			selectClosestControlPoint( const WarpList &warps, const ci::ivec2 &position );
@@ -201,11 +203,11 @@ protected:
 
 private:
 	//! edit mode for all warps
-	static bool			sIsEditMode;
+	static std::atomic<bool>		sIsEditMode;
 	//! time of last control point selection
-	static double		sSelectedTime;
+	static std::atomic<double>		sSelectedTime;
 	//! keep track of mouse position
-	static ci::ivec2	sMouse;
+	static std::atomic<ci::ivec2>	sMouse;
 
 	ci::vec2			mOffset;
 };
@@ -232,8 +234,12 @@ public:
 	//!
 	virtual void		fromXml( const ci::XmlTree &xml ) override;
 
+	//! set the width and height of the content in pixels
+	void				setSize( int w, int h ) override { 
+		Warp::setSize( w, h ); mFbo.reset(); 
+	}
 	//! set the frame buffer format, so you have control over its quality settings
-	void				setFormat( const ci::gl::Fbo::Format &format );
+	void				setFormat( const ci::gl::Fbo::Format &format ) { mFboFormat = format; mFbo.reset(); }
 	//!
 	void				setLinear( bool enabled = true ) { mIsLinear = enabled; mIsDirty = true; };
 	void				setCurved( bool enabled = true ) { mIsLinear = !enabled; mIsDirty = true; };
@@ -311,7 +317,7 @@ public:
 
 public:
 	WarpPerspective( void );
-	~WarpPerspective( void );
+	virtual ~WarpPerspective( void );
 
 	//! returns a shared pointer to this warp
 	WarpPerspectiveRef	getPtr() { return std::static_pointer_cast<WarpPerspective>( shared_from_this() ); }
@@ -365,7 +371,7 @@ public:
 
 public:
 	WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
-	~WarpPerspectiveBilinear( void );
+	virtual ~WarpPerspectiveBilinear( void );
 
 	//! returns a shared pointer to this warp
 	WarpPerspectiveBilinearRef	getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>( shared_from_this() ); }
@@ -385,8 +391,6 @@ public:
 
 	//! set the width and height of the content in pixels
 	void		setSize( int w, int h ) override;
-	//! set the width and height of the content in pixels
-	void		setSize( const ci::ivec2 &size ) override;
 
 	//! returns the coordinates of the specified control point
 	ci::vec2	getControlPoint( unsigned index ) const override;

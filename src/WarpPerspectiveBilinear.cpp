@@ -186,14 +186,6 @@ void WarpPerspectiveBilinear::setSize( int w, int h )
 	WarpBilinear::setSize( w, h );
 }
 
-void WarpPerspectiveBilinear::setSize( const ivec2 &size )
-{
-	// make content size compatible with WarpBilinear's mWindowSize
-	mWarp->setSize( mWindowSize );
-
-	WarpBilinear::setSize( size );
-}
-
 vec2 WarpPerspectiveBilinear::getControlPoint( unsigned index ) const
 {
 	// depending on index, return perspective or bilinear control point
