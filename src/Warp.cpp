@@ -36,15 +36,15 @@ std::atomic<bool>	Warp::sIsEditMode = false;
 std::atomic<double>	Warp::sSelectedTime = 0.0;
 std::atomic<ivec2>	Warp::sMouse = ivec2( 0, 0 );
 
-Warp::Warp( WarpType type ) :
-mType( type ),
-mIsDirty( true ),
-mWidth( 640 ),
-mHeight( 480 ),
-mBrightness( 1.0f ),
-mSelected( -1 ), // since this is an unsigned int, actual value will be 'MAX_INTEGER'
-mControlsX( 2 ),
-mControlsY( 2 )
+Warp::Warp( WarpType type )
+	: mType( type )
+	, mIsDirty( true )
+	, mWidth( 640 )
+	, mHeight( 480 )
+	, mBrightness( 1.0f )
+	, mSelected( -1 ) // since this is an unsigned int, actual value will be 'MAX_INTEGER'
+	, mControlsX( 2 )
+	, mControlsY( 2 )
 {
 	mWindowSize = vec2( float( mWidth ), float( mHeight ) );
 }
@@ -124,10 +124,10 @@ XmlTree	Warp::toXml() const
 	XmlTree		xml;
 	xml.setTag( "warp" );
 	switch( mType ) {
-	case BILINEAR: xml.setAttribute( "method", "bilinear" ); break;
-	case PERSPECTIVE: xml.setAttribute( "method", "perspective" ); break;
-	case PERSPECTIVE_BILINEAR: xml.setAttribute( "method", "perspectivebilinear" ); break;
-	default: xml.setAttribute( "method", "unknown" ); break;
+		case BILINEAR: xml.setAttribute( "method", "bilinear" ); break;
+		case PERSPECTIVE: xml.setAttribute( "method", "perspective" ); break;
+		case PERSPECTIVE_BILINEAR: xml.setAttribute( "method", "perspectivebilinear" ); break;
+		default: xml.setAttribute( "method", "unknown" ); break;
 	}
 	xml.setAttribute( "width", mControlsX );
 	xml.setAttribute( "height", mControlsY );
@@ -385,12 +385,12 @@ bool Warp::handleKeyDown( WarpList &warps, KeyEvent &event )
 		( *itr )->keyDown( event );
 
 	switch( event.getCode() ) {
-	case KeyEvent::KEY_UP:
-	case KeyEvent::KEY_DOWN:
-	case KeyEvent::KEY_LEFT:
-	case KeyEvent::KEY_RIGHT:
-		// do not select another control point
-		break;
+		case KeyEvent::KEY_UP:
+		case KeyEvent::KEY_DOWN:
+		case KeyEvent::KEY_LEFT:
+		case KeyEvent::KEY_RIGHT:
+			// do not select another control point
+			break;
 	}
 
 	return event.isHandled();
@@ -465,62 +465,62 @@ void Warp::keyDown( KeyEvent &event )
 	if( mSelected >= mPoints.size() ) return;
 
 	switch( event.getCode() ) {
-	case KeyEvent::KEY_TAB:
-		// select the next or previous (+SHIFT) control point
-		if( event.isShiftDown() ) {
-			if( mSelected == 0 )
-				mSelected = (int) mPoints.size() - 1;
-			else
-				--mSelected;
-			selectControlPoint( mSelected );
-		}
-		else {
-			++mSelected;
-			if( mSelected >= mPoints.size() ) mSelected = 0;
-			selectControlPoint( mSelected );
-		}
-		break;
-	case KeyEvent::KEY_UP: {
-		if( mSelected >= mPoints.size() ) return;
-		float step = event.isShiftDown() ? 10.0f : 0.5f;
-		mPoints[mSelected].y -= step / mWindowSize.y;
-		mIsDirty = true; }
-		break;
-	case KeyEvent::KEY_DOWN: {
-		if( mSelected >= mPoints.size() ) return;
-		float step = event.isShiftDown() ? 10.0f : 0.5f;
-		mPoints[mSelected].y += step / mWindowSize.y;
-		mIsDirty = true; }
-		break;
-	case KeyEvent::KEY_LEFT: {
-		if( mSelected >= mPoints.size() ) return;
-		float step = event.isShiftDown() ? 10.0f : 0.5f;
-		mPoints[mSelected].x -= step / mWindowSize.x;
-		mIsDirty = true; }
-		break;
-	case KeyEvent::KEY_RIGHT: {
-		if( mSelected >= mPoints.size() ) return;
-		float step = event.isShiftDown() ? 10.0f : 0.5f;
-		mPoints[mSelected].x += step / mWindowSize.x;
-		mIsDirty = true; }
-		break;
-	case KeyEvent::KEY_MINUS:
-	case KeyEvent::KEY_KP_MINUS:
-		if( mSelected >= mPoints.size() ) return;
-		mBrightness = math<float>::max( 0.0f, mBrightness - 0.01f );
-		break;
-	case KeyEvent::KEY_PLUS:
-	case KeyEvent::KEY_KP_PLUS:
-		if( mSelected >= mPoints.size() ) return;
-		mBrightness = math<float>::min( 1.0f, mBrightness + 0.01f );
-		break;
-	case KeyEvent::KEY_r:
-		if( mSelected >= mPoints.size() ) return;
-		reset();
-		mIsDirty = true;
-		break;
-	default:
-		return;
+		case KeyEvent::KEY_TAB:
+			// select the next or previous (+SHIFT) control point
+			if( event.isShiftDown() ) {
+				if( mSelected == 0 )
+					mSelected = (int)mPoints.size() - 1;
+				else
+					--mSelected;
+				selectControlPoint( mSelected );
+			}
+			else {
+				++mSelected;
+				if( mSelected >= mPoints.size() ) mSelected = 0;
+				selectControlPoint( mSelected );
+			}
+			break;
+		case KeyEvent::KEY_UP: {
+			if( mSelected >= mPoints.size() ) return;
+			float step = event.isShiftDown() ? 10.0f : 0.5f;
+			mPoints[mSelected].y -= step / mWindowSize.y;
+			mIsDirty = true; }
+							   break;
+		case KeyEvent::KEY_DOWN: {
+			if( mSelected >= mPoints.size() ) return;
+			float step = event.isShiftDown() ? 10.0f : 0.5f;
+			mPoints[mSelected].y += step / mWindowSize.y;
+			mIsDirty = true; }
+								 break;
+		case KeyEvent::KEY_LEFT: {
+			if( mSelected >= mPoints.size() ) return;
+			float step = event.isShiftDown() ? 10.0f : 0.5f;
+			mPoints[mSelected].x -= step / mWindowSize.x;
+			mIsDirty = true; }
+								 break;
+		case KeyEvent::KEY_RIGHT: {
+			if( mSelected >= mPoints.size() ) return;
+			float step = event.isShiftDown() ? 10.0f : 0.5f;
+			mPoints[mSelected].x += step / mWindowSize.x;
+			mIsDirty = true; }
+								  break;
+		case KeyEvent::KEY_MINUS:
+		case KeyEvent::KEY_KP_MINUS:
+			if( mSelected >= mPoints.size() ) return;
+			mBrightness = math<float>::max( 0.0f, mBrightness - 0.01f );
+			break;
+		case KeyEvent::KEY_PLUS:
+		case KeyEvent::KEY_KP_PLUS:
+			if( mSelected >= mPoints.size() ) return;
+			mBrightness = math<float>::min( 1.0f, mBrightness + 0.01f );
+			break;
+		case KeyEvent::KEY_r:
+			if( mSelected >= mPoints.size() ) return;
+			reset();
+			mIsDirty = true;
+			break;
+		default:
+			return;
 	}
 
 	event.setHandled( true );
@@ -550,7 +550,7 @@ void Warp::drawControlPoint( const vec2 &pt, const Color &clr, float scale )
 {
 	// enable alpha blending, disable textures
 	gl::ScopedBlendAlpha blend;
-	gl::ScopedState state( GL_TEXTURE_2D , GL_FALSE );
+	gl::ScopedState state( GL_TEXTURE_2D, GL_FALSE );
 
 	gl::ScopedLineWidth linewidth( 1.0f );
 	gl::ScopedColor color( ColorA( 0, 0, 0, 0.25f ) );

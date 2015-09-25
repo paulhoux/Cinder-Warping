@@ -35,8 +35,17 @@ namespace ph {
 namespace warping {
 
 WarpBilinear::WarpBilinear( const ci::gl::Fbo::Format &format )
-	: Warp( BILINEAR ), mIsLinear( false ), mIsAdaptive( true ), mX1( 0.0f ), mY1( 0.0f ), mX2( 1.0f ), mY2( 1.0f )
-	, mResolutionX( 0 ), mResolutionY( 0 ), mFboFormat( format ), mResolution( 16 ) // higher value is coarser mesh
+	: Warp( BILINEAR )
+	, mIsLinear( false )
+	, mIsAdaptive( true )
+	, mX1( 0.0f )
+	, mY1( 0.0f )
+	, mX2( 1.0f )
+	, mY2( 1.0f )
+	, mResolutionX( 0 )
+	, mResolutionY( 0 )
+	, mFboFormat( format )
+	, mResolution( 16 ) // higher value is coarser mesh
 {
 	reset();
 }
@@ -666,10 +675,10 @@ void WarpBilinear::createShader()
 		""
 		"float grid( in vec2 uv, in vec2 size )\n"
 		"{\n"
-		"	const float kLineWidth = 2.0;\n"
-		"	float x = 1.0 - step( kLineWidth, mod( uv.x + 0.5 * kLineWidth, size.x ) );\n"
-		"	float y = 1.0 - step( kLineWidth, mod( uv.y + 0.5 * kLineWidth, size.y ) );\n"
-		"	return step( 1.0, x + y );\n"
+		"	vec2 coord = uv / size;\n"
+		"	vec2 grid = 0.25 * abs( fract( coord - 0.5 ) - 0.5 ) / fwidth( coord );\n"
+		"	float line = min( grid.x, grid.y );\n"
+		"	return 1.0 - min( line, 1.0 );\n"
 		"}\n"
 		""
 		"void main(void) {"

@@ -235,9 +235,7 @@ public:
 	virtual void		fromXml( const ci::XmlTree &xml ) override;
 
 	//! set the width and height of the content in pixels
-	void				setSize( int w, int h ) override { 
-		Warp::setSize( w, h ); mFbo.reset(); 
-	}
+	void				setSize( int w, int h ) override { Warp::setSize( w, h ); mFbo.reset(); }
 	//! set the frame buffer format, so you have control over its quality settings
 	void				setFormat( const ci::gl::Fbo::Format &format ) { mFboFormat = format; mFbo.reset(); }
 	//!
@@ -325,7 +323,7 @@ public:
 	//! get the transformation matrix
 	ci::mat4		getTransform();
 	//! get the inverted transformation matrix
-	ci::mat4		getInvertedTransform();
+	ci::mat4		getInvertedTransform() { return mInverted; }
 
 	//! reset control points to undistorted image
 	void			reset() override;

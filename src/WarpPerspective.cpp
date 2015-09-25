@@ -54,7 +54,7 @@ WarpPerspective::~WarpPerspective( void )
 
 mat4 WarpPerspective::getTransform()
 {
-	// calculate warp matrix using OpenCV
+	// calculate warp matrix
 	if( mIsDirty ) {
 		// update source size
 		mSource[1].x = (float)mWidth;
@@ -74,22 +74,12 @@ mat4 WarpPerspective::getTransform()
 
 		// calculate warp matrix
 		mTransform = getPerspectiveTransform( mSource, mDestination );
-
-		// update the inverted matrix
-		getInvertedTransform();
+		mInverted = glm::inverse( mTransform );
 
 		mIsDirty = false;
 	}
 
 	return mTransform;
-}
-
-mat4	WarpPerspective::getInvertedTransform()
-{
-	if( mIsDirty )
-		mInverted = glm::inverse( mTransform );
-
-	return mInverted;
 }
 
 void WarpPerspective::reset()
