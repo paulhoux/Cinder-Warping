@@ -14,24 +14,15 @@ Image warping, as used in this block, is the process of manipulating an image so
 
 
 #####Adding this block to Cinder
-This block is meant to be used with version 0.8.5 (or higher) of Cinder.
+This block is meant to be used with version 0.9.0 (or higher) of Cinder.
 
-Cinder's tool for setting up empty projects, TinderBox, has been revamped and now supports a neat system for the management of plug-ins called Cinder Blocks. This Warping block supports this new feature. To add this block to your copy of Cinder, so it will be detected automatically by TinderBox:
+To add this block to your copy of Cinder, so it will be detected automatically by TinderBox:
 * Open a command window (or Terminal)
 * Switch to the disk containing the Cinder root folder, e.g.: ```d:```
 * Browse to the Cinder root folder: ```cd path\to\cinder_master```
-* Add the Warping block to the blocks folder: ```git clone https://github.com/paulhoux/Cinder-Warping.git blocks/Warping```
+* Add the Warping block to the blocks folder: ```git clone https://github.com/paulhoux/Cinder-Warping.git blocks/Cinder-Warping```
 
-Alternatively, you can download the repository as a [ZIP-file](https://github.com/paulhoux/Cinder-Warping/zipball/master) and manually add the files to a "cinder_master\blocks\Warping" folder.
-
-
-
-#####Dependency on OpenCV
-This block relies on Cinder's optional OpenCV block,so make sure you've installed it in Cinder's block folder:
-* Open a command window (or Terminal)
-* Switch to the disk containing the Cinder root folder, e.g.: ```d:```
-* Browse to the Cinder root folder: ```cd path\to\cinder_master```
-* Add the OpenCV block to the blocks folder: ```git clone https://github.com/cinder/Cinder-OpenCV.git blocks/OpenCV```
+Alternatively, you can download the repository as a [ZIP-file](https://github.com/paulhoux/Cinder-Warping/zipball/master) and manually add the files to a "cinder_master\blocks\Cinder-Warping" folder.
 
 
 #####Creating a sample application using Tinderbox
@@ -42,7 +33,7 @@ The provided sample will show you how to create warps, read them from and write 
 * Choose a location for the project
 * Choose your environment(s) of choice
 * Press "Next"
-* Make sure both the "OpenCV" and "Warping" blocks are enabled (Install: Copy or Relative)
+* Make sure the "Warping" block is enabled (Install: Copy or Relative)
 * Press "Finish"
 
 
@@ -73,7 +64,7 @@ The block provides a built-in editor to adjust your warps. When activated using 
 
 
 #####Copyright notice
-Copyright (c) 2010-2013, Paul Houx - All rights reserved.
+Copyright (c) 2010-2015, Paul Houx - All rights reserved.
 This code is intended for use with the Cinder C++ library: http://libcinder.org
 
 Cinder-Warping is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

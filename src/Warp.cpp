@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2013, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2015, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -23,9 +23,11 @@
 #include "WarpPerspective.h"
 #include "WarpPerspectiveBilinear.h"
 
-#include "cinder/Xml.h"
-#include "cinder/app/AppBasic.h"
+#include "cinder/app/App.h"
+#include "cinder/gl/draw.h"
+#include "cinder/gl/scoped.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/Xml.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -558,7 +560,7 @@ void Warp::drawControlPoint( const vec2 &pt, bool selected, bool attached )
 void Warp::drawControlPoint( const vec2 &pt, const Color &clr, float scale )
 {
 	// enable alpha blending, disable textures
-	gl::ScopedAlphaBlend blend( false );
+	gl::ScopedBlendAlpha blend;
 	glDisable( GL_TEXTURE_2D );
 
 	glLineWidth( 1.0f );

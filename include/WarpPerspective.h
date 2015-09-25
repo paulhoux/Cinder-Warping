@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2013, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2015, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -19,9 +19,6 @@
  */
 
 #pragma once
-
-// requires Cinder's OpenCV block
-#include "CinderOpenCV.h"
 
 #include "Warp.h"
 
@@ -66,12 +63,15 @@ public:
 protected:
 	//!
 	void	draw( bool controls = true ) override;
-	//!
-	inline	ci::vec2	toVec2f( const cv::Point2f &pt ) const { return ci::vec2( pt.x, pt.y ); };
-	inline	cv::Point2f	fromVec2f( const ci::vec2 &pt ) const { return cv::Point2f( pt.x, pt.y ); };
+
+	//! find homography based on source and destination quad
+	ci::mat4 getPerspectiveTransform( const ci::vec2 src[4], const ci::vec2 dst[4] ) const;
+	//! helper function
+	void gaussianElimination( float * input, int n ) const;
+
 protected:
-	cv::Point2f	mSource[4];
-	cv::Point2f	mDestination[4];
+	ci::vec2	mSource[4];
+	ci::vec2	mDestination[4];
 
 	ci::mat4	mTransform;
 	ci::mat4	mInverted;

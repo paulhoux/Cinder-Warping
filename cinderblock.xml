@@ -9,7 +9,6 @@
 	url="https://github.com/paulhoux/Cinder-Warping"
 	git="git://github.com/paulhoux/Cinder-Warping.git"
 	>
-	<requires>org.libcinder.opencv</requires>
 	<supports os="macosx" />
 	<supports os="msw" />
 	<includePath>include</includePath>

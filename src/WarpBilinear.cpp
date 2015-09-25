@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2013, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2015, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -20,10 +20,11 @@
 
 #include "WarpBilinear.h"
 
-#include "cinder/Xml.h"
-#include "cinder/app/AppBasic.h"
+#include "cinder/app/App.h"
+#include "cinder/gl/scoped.h"
 #include "cinder/gl/Context.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/Xml.h"
 
 // Cinder does not provide comparison operators on gl::Fbo::Format
 
