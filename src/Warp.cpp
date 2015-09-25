@@ -19,9 +19,6 @@
  */
 
 #include "Warp.h"
-#include "WarpBilinear.h"
-#include "WarpPerspective.h"
-#include "WarpPerspectiveBilinear.h"
 
 #include "cinder/app/App.h"
 #include "cinder/gl/draw.h"
@@ -561,9 +558,9 @@ void Warp::drawControlPoint( const vec2 &pt, const Color &clr, float scale )
 {
 	// enable alpha blending, disable textures
 	gl::ScopedBlendAlpha blend;
-	glDisable( GL_TEXTURE_2D );
+	gl::ScopedState state( GL_TEXTURE_2D , GL_FALSE );
 
-	glLineWidth( 1.0f );
+	gl::ScopedLineWidth linewidth( 1.0f );
 	gl::ScopedColor color( ColorA( 0, 0, 0, 0.25f ) );
 	gl::drawSolidCircle( pt, 15.0f * scale );
 

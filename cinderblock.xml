@@ -13,9 +13,6 @@
 	<supports os="msw" />
 	<includePath>include</includePath>
 	<header>include/Warp.h</header>
-	<header>include/WarpBilinear.h</header>
-	<header>include/WarpPerspective.h</header>
-	<header>include/WarpPerspectiveBilinear.h</header>
 	<source>src/Warp.cpp</source>
 	<source>src/WarpBilinear.cpp</source>
 	<source>src/WarpPerspective.cpp</source>

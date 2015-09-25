@@ -18,7 +18,7 @@
  along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "WarpPerspectiveBilinear.h"
+#include "Warp.h"
 
 #include "cinder/app/App.h"
 #include "cinder/Xml.h"

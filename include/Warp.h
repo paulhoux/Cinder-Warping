@@ -28,9 +28,11 @@
 #include "cinder/Rect.h"
 #include "cinder/Vector.h"
 
+#include "cinder/gl/gl.h"
+
 #include <vector>
 
-// forward declarations
+ // forward declarations
 
 namespace cinder {
 class XmlTree;
@@ -206,6 +208,207 @@ private:
 	static ci::ivec2	sMouse;
 
 	ci::vec2			mOffset;
+};
+
+// ----------------------------------------------------------------------------------------------------------------
+
+typedef std::shared_ptr<class WarpBilinear>	WarpBilinearRef;
+
+class WarpBilinear
+	: public Warp {
+public:
+	//
+	static WarpBilinearRef create( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() ) { return std::make_shared<WarpBilinear>( format ); }
+
+public:
+	WarpBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
+	virtual ~WarpBilinear( void );
+
+	//! returns a shared pointer to this warp
+	WarpBilinearRef	getPtr() { return std::static_pointer_cast<WarpBilinear>( shared_from_this() ); }
+
+	//!
+	virtual ci::XmlTree	toXml() const override;
+	//!
+	virtual void		fromXml( const ci::XmlTree &xml ) override;
+
+	//! set the frame buffer format, so you have control over its quality settings
+	void				setFormat( const ci::gl::Fbo::Format &format );
+	//!
+	void				setLinear( bool enabled = true ) { mIsLinear = enabled; mIsDirty = true; };
+	void				setCurved( bool enabled = true ) { mIsLinear = !enabled; mIsDirty = true; };
+
+	//! reset control points to undistorted image
+	virtual void		reset() override;
+	//! setup the warp before drawing its contents
+	virtual void		begin() override;
+	//! restore the warp after drawing
+	virtual void		end() override;
+
+	//! draws a warped texture
+	virtual void		draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea, const ci::Rectf &destRect ) override;
+
+	//! set the number of horizontal control points for this warp 
+	void				setNumControlX( int n );
+	//! set the number of vertical control points for this warp
+	void				setNumControlY( int n );
+
+	void				setTexCoords( float x1, float y1, float x2, float y2 );
+
+	virtual void		keyDown( ci::app::KeyEvent &event ) override;
+protected:
+	//! draws the warp as a mesh, allowing you to use your own texture instead of the FBO
+	virtual void		draw( bool controls = true ) override;
+	//! Creates the shader that renders the content with a wireframe overlay
+	void				createShader();
+	//! Creates the frame buffer object and updates the vertex buffer object if necessary
+	void				createBuffers();
+	//! Creates the vertex buffer object
+	void				createMesh( int resolutionX = 36, int resolutionY = 36 );
+	//! Updates the vertex buffer object based on the control points
+	void				updateMesh();
+	//!	Returns the specified control point. Values for col and row are clamped to prevent errors.
+	ci::vec2			getPoint( int col, int row ) const;
+	//! Performs fast Catmull-Rom interpolation, returns the interpolated value at t
+	ci::vec2			cubicInterpolate( const std::vector<ci::vec2> &knots, float t ) const;
+	//!
+	ci::Rectf			getMeshBounds() const;
+private:
+	//! Greatest common divisor using Euclidian algorithm (from: http://en.wikipedia.org/wiki/Greatest_common_divisor)
+	inline int			gcd( int a, int b ) const { if( b == 0 ) return a; else return gcd( b, a%b ); };
+protected:
+	ci::gl::FboRef			mFbo;
+	ci::gl::Fbo::Format		mFboFormat;
+	ci::gl::VboMeshRef		mVboMesh;
+	ci::gl::GlslProgRef		mShader;
+	ci::gl::BatchRef		mBatch;
+
+	//! linear or curved interpolation
+	bool					mIsLinear;
+	//!
+	bool					mIsAdaptive;
+
+	//! texture coordinates of corners
+	float					mX1, mY1, mX2, mY2;
+
+	//! Determines the detail of the generated mesh. Multiples of 5 seem to work best.
+	int						mResolution;
+
+	//! Determines the number of horizontal and vertical quads 
+	int						mResolutionX;
+	int						mResolutionY;
+};
+
+// ----------------------------------------------------------------------------------------------------------------
+
+typedef std::shared_ptr<class WarpPerspective> WarpPerspectiveRef;
+
+class WarpPerspective
+	: public Warp {
+public:
+	//
+	static WarpPerspectiveRef create() { return std::make_shared<WarpPerspective>(); }
+
+public:
+	WarpPerspective( void );
+	~WarpPerspective( void );
+
+	//! returns a shared pointer to this warp
+	WarpPerspectiveRef	getPtr() { return std::static_pointer_cast<WarpPerspective>( shared_from_this() ); }
+
+	//! get the transformation matrix
+	ci::mat4		getTransform();
+	//! get the inverted transformation matrix
+	ci::mat4		getInvertedTransform();
+
+	//! reset control points to undistorted image
+	void			reset() override;
+	//! setup the warp before drawing its contents
+	void			begin() override;
+	//! restore the warp after drawing
+	void			end() override;
+
+	//! draws a warped texture
+	void			draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea, const ci::Rectf &destRect ) override;
+
+	//! override keyDown method to add additional key handling
+	void			keyDown( ci::app::KeyEvent &event ) override;
+
+	//! allow WarpPerspectiveBilinear to access the protected class members
+	friend class WarpPerspectiveBilinear;
+protected:
+	//!
+	void	draw( bool controls = true ) override;
+
+	//! find homography based on source and destination quad
+	ci::mat4 getPerspectiveTransform( const ci::vec2 src[4], const ci::vec2 dst[4] ) const;
+	//! helper function
+	void gaussianElimination( float * input, int n ) const;
+
+protected:
+	ci::vec2	mSource[4];
+	ci::vec2	mDestination[4];
+
+	ci::mat4	mTransform;
+	ci::mat4	mInverted;
+};
+
+// ----------------------------------------------------------------------------------------------------------------
+
+typedef std::shared_ptr<class WarpPerspectiveBilinear>	WarpPerspectiveBilinearRef;
+
+class WarpPerspectiveBilinear
+	: public WarpBilinear {
+public:
+	//
+	static WarpPerspectiveBilinearRef create( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() ) { return std::make_shared<WarpPerspectiveBilinear>( format ); }
+
+public:
+	WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
+	~WarpPerspectiveBilinear( void );
+
+	//! returns a shared pointer to this warp
+	WarpPerspectiveBilinearRef	getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>( shared_from_this() ); }
+
+	//!
+	ci::XmlTree	toXml() const override;
+	//!
+	void		fromXml( const ci::XmlTree &xml ) override;
+
+	void		mouseMove( ci::app::MouseEvent &event ) override;
+	void		mouseDown( ci::app::MouseEvent &event ) override;
+	void		mouseDrag( ci::app::MouseEvent &event ) override;
+
+	void		keyDown( ci::app::KeyEvent &event ) override;
+
+	void		resize() override;
+
+	//! set the width and height of the content in pixels
+	void		setSize( int w, int h ) override;
+	//! set the width and height of the content in pixels
+	void		setSize( const ci::ivec2 &size ) override;
+
+	//! returns the coordinates of the specified control point
+	ci::vec2	getControlPoint( unsigned index ) const override;
+	//! sets the coordinates of the specified control point
+	void		setControlPoint( unsigned index, const ci::vec2 &pos ) override;
+	//! moves the specified control point 
+	void		moveControlPoint( unsigned index, const ci::vec2 &shift ) override;
+	//! select one of the control points
+	void		selectControlPoint( unsigned index ) override;
+	//! deselect the selected control point
+	void		deselectControlPoint() override;
+protected:
+	//! 
+	void		draw( bool controls = true ) override;
+
+	//! returns whether or not the control point is one of the 4 corners and should be treated as a perspective control point
+	bool		isCorner( unsigned index ) const;
+	//! converts the control point index to the appropriate perspective warp index
+	unsigned	convertIndex( unsigned index ) const;
+
+protected:
+	WarpPerspectiveRef	mWarp;
 };
 
 }

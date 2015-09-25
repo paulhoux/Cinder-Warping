@@ -18,7 +18,7 @@
  along with Cinder-Warping.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "WarpPerspective.h"
+#include "Warp.h"
 
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
@@ -221,7 +221,7 @@ void WarpPerspective::keyDown( KeyEvent &event )
 			// flip content vertically
 			std::swap( mPoints[0], mPoints[3] );
 			std::swap( mPoints[1], mPoints[2] );
-			mSelected = ( mPoints.size() - 1 ) - mSelected;
+			mSelected = ( (unsigned) mPoints.size() - 1 ) - mSelected;
 			mIsDirty = true;
 			break;
 		default:

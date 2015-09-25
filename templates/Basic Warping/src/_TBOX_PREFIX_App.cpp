@@ -25,9 +25,7 @@
 #include "cinder/ImageIo.h"
 #include "cinder/Rand.h"
 
-#include "WarpBilinear.h"
-#include "WarpPerspective.h"
-#include "WarpPerspectiveBilinear.h"
+#include "Warp.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -36,20 +34,20 @@ using namespace std;
 
 class _TBOX_PREFIX_App : public App {
 public:
-	void setup();
-	void shutdown();
-	void update();
-	void draw();
+	void setup() override;
+	void cleanup() override;
+	void update() override;
+	void draw() override;
 
-	void resize();
+	void resize() override;
 
-	void mouseMove( MouseEvent event );
-	void mouseDown( MouseEvent event );
-	void mouseDrag( MouseEvent event );
-	void mouseUp( MouseEvent event );
+	void mouseMove( MouseEvent event ) override;
+	void mouseDown( MouseEvent event ) override;
+	void mouseDrag( MouseEvent event ) override;
+	void mouseUp( MouseEvent event ) override;
 
-	void keyDown( KeyEvent event );
-	void keyUp( KeyEvent event );
+	void keyDown( KeyEvent event ) override;
+	void keyUp( KeyEvent event ) override;
 
 	void updateWindowTitle();
 private:
@@ -77,7 +75,7 @@ void _TBOX_PREFIX_App::setup()
 	}
 	else {
 		// otherwise create a warp from scratch
-		mWarps.push_back( WarpPerspective::create() );
+		mWarps.push_back( WarpPerspectiveBilinear::create() );
 	}
 
 	// load test image
@@ -94,7 +92,7 @@ void _TBOX_PREFIX_App::setup()
 	}
 }
 
-void _TBOX_PREFIX_App::shutdown()
+void _TBOX_PREFIX_App::cleanup()
 {
 	// save warp settings
 	Warp::writeSettings( mWarps, writeFile( mSettings ) );
@@ -182,7 +180,7 @@ void _TBOX_PREFIX_App::keyDown( KeyEvent event )
 		switch( event.getCode() ) {
 			case KeyEvent::KEY_ESCAPE:
 				// quit the application
-				shutdown();
+				quit();
 				break;
 			case KeyEvent::KEY_f:
 				// toggle full screen
