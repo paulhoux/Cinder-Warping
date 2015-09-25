@@ -146,7 +146,7 @@ void WarpPerspective::draw( bool controls )
 		gl::pushModelMatrix();
 		gl::multModelMatrix( getTransform() );
 
-		glLineWidth( 1.0f );
+		gl::ScopedLineWidth linewidth( 1.0f );
 		glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
 		gl::ScopedColor color( Color::white() );
@@ -161,10 +161,12 @@ void WarpPerspective::draw( bool controls )
 
 		gl::popModelMatrix();
 
-		if( controls ) {
-			// draw control points		
+		if( controls && mSelected < mPoints.size() ) {
+			// draw control points
 			for( int i = 0; i < 4; i++ )
-				drawControlPoint( mDestination[i], i == mSelected );
+				queueControlPoint( mDestination[i], i == mSelected );
+
+			drawControlPoints();
 		}
 	}
 }
@@ -211,7 +213,7 @@ void WarpPerspective::keyDown( KeyEvent &event )
 			// flip content vertically
 			std::swap( mPoints[0], mPoints[3] );
 			std::swap( mPoints[1], mPoints[2] );
-			mSelected = ( (unsigned) mPoints.size() - 1 ) - mSelected;
+			mSelected = ( (unsigned)mPoints.size() - 1 ) - mSelected;
 			mIsDirty = true;
 			break;
 		default:

@@ -536,33 +536,102 @@ void Warp::resize()
 	mIsDirty = true;
 }
 
-void Warp::drawControlPoint( const vec2 &pt, bool selected, bool attached )
+void Warp::queueControlPoint( const vec2 &pt, bool selected, bool attached )
 {
 	float scale = 0.9f + 0.2f * math<float>::sin( 6.0f * float( app::getElapsedSeconds() - sSelectedTime ) );
 
-	if( selected && attached ) { drawControlPoint( pt, Color( 0.0f, 0.8f, 0.0f ) ); }
-	else if( selected ) { drawControlPoint( pt, Color( 0.9f, 0.9f, 0.9f ), scale ); }
-	else if( attached ) { drawControlPoint( pt, Color( 0.0f, 0.4f, 0.0f ) ); }
-	else { drawControlPoint( pt, Color( 0.4f, 0.4f, 0.4f ) ); }
+	if( selected && attached ) { queueControlPoint( pt, Color( 0.0f, 0.8f, 0.0f ) ); }
+	else if( selected ) { queueControlPoint( pt, Color( 0.9f, 0.9f, 0.9f ), scale ); }
+	else if( attached ) { queueControlPoint( pt, Color( 0.0f, 0.4f, 0.0f ) ); }
+	else { queueControlPoint( pt, Color( 0.4f, 0.4f, 0.4f ) ); }
 }
 
-void Warp::drawControlPoint( const vec2 &pt, const Color &clr, float scale )
+void Warp::queueControlPoint( const vec2 &pt, const Color &clr, float scale )
 {
-	// enable alpha blending, disable textures
-	gl::ScopedBlendAlpha blend;
-	gl::ScopedState state( GL_TEXTURE_2D, GL_FALSE );
+	if( mControlPoints.size() < MAX_NUM_CONTROL_POINTS )
+		mControlPoints.emplace_back( Data( pt, vec4( clr.r, clr.g, clr.b, 1 ), scale ) );
+}
 
-	gl::ScopedLineWidth linewidth( 1.0f );
-	gl::ScopedColor color( ColorA( 0, 0, 0, 0.25f ) );
-	gl::drawSolidCircle( pt, 15.0f * scale );
+void Warp::drawControlPoints()
+{
+	if( !mInstancedBatch ) {
+		gl::VboMeshRef mesh = gl::VboMesh::create( geom::Circle().radius( 15 ) );
 
-	gl::color( clr );
-	gl::drawSolidCircle( pt, 3.0f * scale );
+		std::vector<Data> positions;
+		positions.resize( MAX_NUM_CONTROL_POINTS );
 
-	glLineWidth( 2.0f );
-	gl::color( ColorA( clr, 1.0f ) );
-	gl::drawStrokedCircle( pt, 8.0f * scale );
-	gl::drawStrokedCircle( pt, 12.0f * scale );
+		mInstanceDataVbo = gl::Vbo::create( GL_ARRAY_BUFFER, positions.size() * sizeof( Data ), positions.data(), GL_STATIC_DRAW );
+
+		geom::BufferLayout instanceDataLayout;
+		instanceDataLayout.append( geom::Attrib::CUSTOM_0, 4, sizeof( Data ), offsetof( Data, position ), 1 /* per instance */ );
+		instanceDataLayout.append( geom::Attrib::CUSTOM_1, 4, sizeof( Data ), offsetof( Data, color ), 1 /* per instance */ );
+
+		mesh->appendVbo( instanceDataLayout, mInstanceDataVbo );
+
+		try {
+			auto glsl = gl::GlslProg::create(
+				gl::GlslProg::Format().vertex(
+					"#version 150\n"
+					""
+					"uniform mat4 ciViewProjection;\n"
+					""
+					"in vec4 ciPosition;\n"
+					"in vec2 ciTexCoord0;\n"
+					"in vec4 ciColor;\n"
+					""
+					"in vec4 iPositionScale;\n"
+					"in vec4 iColor;\n"
+					""
+					"out vec2 vertTexCoord0;\n"
+					"out vec4 vertColor;\n"
+					""
+					"void main(void) {\n"
+					"	vertTexCoord0 = ciTexCoord0;\n"
+					"	vertColor = ciColor * iColor;\n"
+					"	gl_Position = ciViewProjection * vec4( ciPosition.xy * iPositionScale.z + iPositionScale.xy, ciPosition.zw );\n"
+					"}"
+					)
+				.fragment(
+					"#version 150\n"
+					""
+					"in  vec2 vertTexCoord0;\n"
+					"in  vec4 vertColor;\n"
+					""
+					"out vec4 fragColor;\n"
+					""
+					"void main(void) {\n"
+					"	vec2 uv = vertTexCoord0 * 2.0 - 1.0;\n"
+					"	float d = dot( uv, uv );\n"
+					"	float rim = smoothstep( 0.5, 0.6, d );\n"
+					"	rim += smoothstep( 0.1, 0.0, d );\n"
+					"	fragColor = mix( vec4( 0.0, 0.0, 0.0, 0.25 ), vertColor, rim );\n"
+					"}"
+					) );
+
+			mInstancedBatch = gl::Batch::create( mesh, glsl, { { geom::Attrib::CUSTOM_0, "iPositionScale" }, { geom::Attrib::CUSTOM_1, "iColor" } } );
+		}
+		catch( const std::exception &exc ) {
+			app::console() << exc.what() << std::endl;
+			return;
+		}
+	}
+
+	if( mInstancedBatch && !mControlPoints.empty() ) {
+		// update instance data buffer
+		auto ptr = (Data*)mInstanceDataVbo->mapReplace();
+		for( size_t i = 0; i < mControlPoints.size(); ++i )
+			*ptr++ = mControlPoints[i];
+		mInstanceDataVbo->unmap();
+
+		// render to window
+		//gl::ScopedMatrices matrices;
+		//gl::setMatricesWindow( getWindowSize() );
+
+		// draw instanced
+		mInstancedBatch->drawInstanced( (GLsizei) mControlPoints.size() );
+	}
+
+	mControlPoints.clear();
 }
 
 }

@@ -203,10 +203,12 @@ void WarpBilinear::draw( bool controls )
 	if( isEditModeEnabled() ) {
 		gl::ScopedGlslProg shader( gl::context()->getStockShader( gl::ShaderDef().color() ) );
 
-		if( controls ) {
+		if( controls && mSelected < mPoints.size() ) {
 			// draw control points
 			for( unsigned i = 0; i < mPoints.size(); i++ )
-				drawControlPoint( getControlPoint( i ) * mWindowSize, i == mSelected );
+				queueControlPoint( getControlPoint( i ) * mWindowSize, i == mSelected );
+
+			drawControlPoints();
 		}
 	}
 }

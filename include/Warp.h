@@ -143,9 +143,9 @@ public:
 	static void			selectClosestControlPoint( const WarpList &warps, const ci::ivec2 &position );
 
 	//! draw a control point in the correct preset color
-	static void			drawControlPoint( const ci::vec2 &pt, bool selected = false, bool attached = false );
+	void				queueControlPoint( const ci::vec2 &pt, bool selected = false, bool attached = false );
 	//! draw a control point in the specified color
-	static void			drawControlPoint( const ci::vec2 &pt, const ci::Color &clr, float scale = 1.0f );
+	void				queueControlPoint( const ci::vec2 &pt, const ci::Color &clr, float scale = 1.0f );
 
 	//! read a settings xml file and pass back a vector of Warps
 	static WarpList		readSettings( const ci::DataSourceRef &source );
@@ -181,6 +181,8 @@ public:
 protected:
 	//! draw the warp and its editing interface
 	virtual void		draw( bool controls = true ) = 0;
+	//! draw the control points
+	void				drawControlPoints();
 
 protected:
 	WarpType		mType;
@@ -210,6 +212,24 @@ private:
 	static std::atomic<ci::ivec2>	sMouse;
 
 	ci::vec2			mOffset;
+
+	//! instanced control points
+	static const int		MAX_NUM_CONTROL_POINTS = 1024;
+
+	typedef struct Data {
+		ci::vec2 position;
+		float    scale;
+		float    reserved;
+		ci::vec4 color;
+
+		Data() {}
+		Data( const ci::vec2 &pt, const ci::vec4 &clr, float scale ) : position( pt ), scale( scale ), color( clr ) {}
+	} Data;
+
+	std::vector<Data>	mControlPoints;
+
+	ci::gl::VboRef		mInstanceDataVbo;
+	ci::gl::BatchRef	mInstancedBatch;
 };
 
 // ----------------------------------------------------------------------------------------------------------------

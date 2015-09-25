@@ -92,10 +92,12 @@ void WarpPerspectiveBilinear::draw( bool controls )
 
 	// draw edit interface
 	if( isEditModeEnabled() ) {
-		if( controls ) {
+		if( controls && mSelected < mPoints.size() ) {
 			// draw control points
 			for( unsigned i = 0; i < mPoints.size(); ++i )
-				drawControlPoint( getControlPoint( i ) * mWindowSize, mSelected == i );
+				queueControlPoint( getControlPoint( i ) * mWindowSize, mSelected == i );
+
+			drawControlPoints();
 		}
 	}
 }
