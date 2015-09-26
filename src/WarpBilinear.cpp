@@ -702,7 +702,7 @@ void WarpBilinear::createShader()
 		"float grid( in vec2 uv, in vec2 size )\n"
 		"{\n"
 		"	vec2 coord = uv / size;\n"
-		"	vec2 grid = 0.25 * abs( fract( coord - 0.5 ) - 0.5 ) / fwidth( coord );\n"
+		"	vec2 grid = abs( fract( coord - 0.5 ) - 0.5 ) / ( 2.0 * fwidth( coord ) );\n"
 		"	float line = min( grid.x, grid.y );\n"
 		"	return 1.0 - min( line, 1.0 );\n"
 		"}\n"
