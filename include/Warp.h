@@ -203,7 +203,6 @@ protected:
 
 	std::vector<ci::vec2>	mPoints;
 
-private:
 	//! edit mode for all warps
 	static std::atomic<bool>		sIsEditMode;
 	//! time of last control point selection
@@ -211,11 +210,12 @@ private:
 	//! keep track of mouse position
 	static std::atomic<ci::ivec2>	sMouse;
 
+	static const int	MAX_NUM_CONTROL_POINTS = 1024;
+
+private:
 	ci::vec2			mOffset;
 
 	//! instanced control points
-	static const int		MAX_NUM_CONTROL_POINTS = 1024;
-
 	typedef struct Data {
 		ci::vec2 position;
 		float    scale;

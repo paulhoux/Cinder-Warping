@@ -226,30 +226,42 @@ void WarpBilinear::keyDown( KeyEvent &event )
 	// do not listen to key input if not selected
 	if( mSelected >= mPoints.size() ) return;
 
+	// in case we need to find the closest control point
+	float distance;
+	vec2  pt = (ivec2) Warp::sMouse;
+
 	switch( event.getCode() ) {
 		case KeyEvent::KEY_F1:
 			// reduce the number of horizontal control points
 			if( !event.isShiftDown() )
 				setNumControlX( ( mControlsX + 1 ) / 2 );
 			else setNumControlX( mControlsX - 1 );
+			// find closest control point
+			mSelected = findControlPoint( pt, &distance );
 			break;
 		case KeyEvent::KEY_F2:
 			// increase the number of horizontal control points
 			if( !event.isShiftDown() )
 				setNumControlX( 2 * mControlsX - 1 );
 			else setNumControlX( mControlsX + 1 );
+			// find closest control point
+			mSelected = findControlPoint( pt, &distance );
 			break;
 		case KeyEvent::KEY_F3:
 			// reduce the number of vertical control points
 			if( !event.isShiftDown() )
 				setNumControlY( ( mControlsY + 1 ) / 2 );
 			else setNumControlY( mControlsY - 1 );
+			// find closest control point
+			mSelected = findControlPoint( pt, &distance );
 			break;
 		case KeyEvent::KEY_F4:
 			// increase the number of vertical control points
 			if( !event.isShiftDown() )
 				setNumControlY( 2 * mControlsY - 1 );
 			else setNumControlY( mControlsY + 1 );
+			// find closest control point
+			mSelected = findControlPoint( pt, &distance );
 			break;
 		case KeyEvent::KEY_m:
 			// toggle between linear and curved mapping
@@ -293,6 +305,8 @@ void WarpBilinear::keyDown( KeyEvent &event )
 			}
 			mPoints = points;
 			mIsDirty = true;
+			// find closest control point
+			mSelected = findControlPoint( pt, &distance );
 		}
 		break;
 		case KeyEvent::KEY_F12:
@@ -307,6 +321,8 @@ void WarpBilinear::keyDown( KeyEvent &event )
 			}
 			mPoints = points;
 			mIsDirty = true;
+			// find closest control point
+			mSelected = findControlPoint( pt, &distance );
 		}
 		break;
 		default:
@@ -517,6 +533,10 @@ void WarpBilinear::setNumControlX( int n )
 	// there should be a minimum of 2 control points
 	n = math<int>::max( 2, n );
 
+	// prevent overflow
+	if( ( n * mControlsY ) > MAX_NUM_CONTROL_POINTS )
+		return;
+
 	// create a list of new points
 	std::vector<vec2> temp( n * mControlsY );
 
@@ -580,6 +600,10 @@ void WarpBilinear::setNumControlY( int n )
 {
 	// there should be a minimum of 2 control points
 	n = math<int>::max( 2, n );
+
+	// prevent overflow
+	if( ( mControlsX * n ) > MAX_NUM_CONTROL_POINTS )
+		return;
 
 	// create a list of new points
 	std::vector<vec2> temp( mControlsX * n );
