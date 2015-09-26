@@ -165,8 +165,8 @@ void WarpBilinear::end()
 void WarpBilinear::draw( bool controls )
 {
 	createShader();
-
 	createBuffers();
+
 	if( !mVboMesh ) return;
 
 	// save current texture mode, drawing color, line width and depth buffer state
@@ -187,29 +187,24 @@ void WarpBilinear::draw( bool controls )
 	}
 
 	// draw textured mesh
-	if( isEditModeEnabled() ) {
-		gl::ScopedGlslProg shader( mShader );
-		mShader->uniform( "uTex0", 0 );
-		mShader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
-		mBatch->replaceGlslProg( mShader );
-	}
-	else {
-		mBatch->replaceGlslProg( gl::context()->getStockShader( gl::ShaderDef().texture() ) );
-	}
+	gl::ScopedGlslProg shader( mShader );
+	mShader->uniform( "uTex0", 0 );
+	mShader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
+	mShader->uniform( "uLuminance", mLuminance );
+	mShader->uniform( "uGamma", mGamma );
+	mShader->uniform( "uEdges", mEdges );
+	mShader->uniform( "uExponent", mExponent );
+	mShader->uniform( "uEditMode", (bool)isEditModeEnabled() );
 
 	mBatch->draw();
 
 	// draw edit interface
-	if( isEditModeEnabled() ) {
-		gl::ScopedGlslProg shader( gl::context()->getStockShader( gl::ShaderDef().color() ) );
+	if( isEditModeEnabled() && controls && mSelected < mPoints.size() ) {
+		// draw control points
+		for( unsigned i = 0; i < mPoints.size(); i++ )
+			queueControlPoint( getControlPoint( i ) * mWindowSize, i == mSelected );
 
-		if( controls && mSelected < mPoints.size() ) {
-			// draw control points
-			for( unsigned i = 0; i < mPoints.size(); i++ )
-				queueControlPoint( getControlPoint( i ) * mWindowSize, i == mSelected );
-
-			drawControlPoints();
-		}
+		drawControlPoints();
 	}
 }
 
@@ -669,53 +664,70 @@ void WarpBilinear::createShader()
 		return;
 
 	gl::GlslProg::Format fmt;
-	fmt.vertex(
-		"#version 150\n"
-		""
-		"uniform mat4 ciModelViewProjection;\n"
-		""
-		"in vec4 ciPosition;\n"
-		"in vec2 ciTexCoord0;\n"
-		"in vec4 ciColor;\n"
-		""
-		"out vec2 vTexCoord0;\n"
-		"out vec4 vColor;\n"
-		""
-		"void main(void) {\n"
-		"	vColor = ciColor;\n"
-		"	vTexCoord0 = ciTexCoord0;\n"
-		""
-		"	gl_Position = ciModelViewProjection * ciPosition;\n"
-		"}"
-		);
-	fmt.fragment(
-		"#version 150\n"
-		""
-		"uniform sampler2D uTex0;\n"
-		"uniform vec4 uExtends;\n"
-		""
-		"in vec2 vTexCoord0;\n"
-		"in vec4 vColor;\n"
-		""
-		"out vec4 oColor;\n"
-		""
-		"float grid( in vec2 uv, in vec2 size )\n"
-		"{\n"
-		"	vec2 coord = uv / size;\n"
-		"	vec2 grid = abs( fract( coord - 0.5 ) - 0.5 ) / ( 2.0 * fwidth( coord ) );\n"
-		"	float line = min( grid.x, grid.y );\n"
-		"	return 1.0 - min( line, 1.0 );\n"
-		"}\n"
-		""
-		"void main(void) {"
-		"	vec4 gridColor = vec4( 1 );\n"
-		"	vec4 texColor = texture( uTex0, vTexCoord0 );\n"
-		""
-		"	float f = grid(vTexCoord0.xy * uExtends.xy, uExtends.zw );\n"
-		"	oColor = mix( texColor, gridColor, f );\n"
-		"}"
-		);
+	fmt.vertex( CI_GLSL( 150,
+		uniform mat4 ciModelViewProjection;
+		
+		in vec4 ciPosition;
+		in vec2 ciTexCoord0;
+		in vec4 ciColor;
+		
+		out vec2 vertTexCoord0;
+		out vec4 vertColor;
+		
+		void main(void) {
+			vertColor = ciColor;
+			vertTexCoord0 = ciTexCoord0;
+		
+			gl_Position = ciModelViewProjection * ciPosition;
+		}
+		));
+	fmt.fragment( CI_GLSL( 150,
+		uniform sampler2D  uTex0;
+		uniform vec4       uExtends;
+		uniform vec3       uLuminance;
+		uniform vec3       uGamma;
+		uniform vec4       uEdges;
+		uniform float      uExponent;
+		uniform bool       uEditMode;
+		
+		in vec2 vertTexCoord0;
+		in vec4 vertColor;
+		
+		out vec4 fragColor;
+		
+		float grid( in vec2 uv, in vec2 size )
+		{
+			vec2 coord = uv / size;
+			vec2 grid = abs( fract( coord - 0.5 ) - 0.5 ) / ( 2.0 * fwidth( coord ) );
+			float line = min( grid.x, grid.y );
+			return 1.0 - min( line, 1.0 );
+		}
+		
+		void main(void) {
+			vec4 texColor = texture( uTex0, vertTexCoord0 );
 
+			float a = 1.0;
+			if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / uEdges.x, 0.0, 1.0 );
+			if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / uEdges.y, 0.0, 1.0 );
+			if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );
+			if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );
+
+			const vec3 one = vec3( 1.0 );
+			vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) )
+				: one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );
+
+			texColor.rgb *= pow( blend, one / uGamma );
+		
+			if( uEditMode ) {
+				float f = grid(vertTexCoord0.xy * uExtends.xy, uExtends.zw );
+				vec4 gridColor = vec4( 1 );
+				fragColor = mix( texColor, gridColor, f );
+			}
+			else {
+				fragColor = texColor;
+			}
+		}
+		));
 	try {
 		mShader = gl::GlslProg::create( fmt );
 	}

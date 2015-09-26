@@ -45,6 +45,10 @@ Warp::Warp( WarpType type )
 	, mSelected( -1 ) // since this is an unsigned int, actual value will be 'MAX_INTEGER'
 	, mControlsX( 2 )
 	, mControlsY( 2 )
+	, mLuminance( 0.5f )
+	, mGamma( 1.0f )
+	, mEdges( 0.0f )
+	, mExponent( 2.0f )
 {
 	mWindowSize = vec2( float( mWidth ), float( mHeight ) );
 }
@@ -144,6 +148,35 @@ XmlTree	Warp::toXml() const
 		xml.push_back( cp );
 	}
 
+	// add <blend> parameters
+	XmlTree blend;
+	blend.setTag( "blend" );
+	blend.setAttribute( "exponent", mExponent );
+	{
+		XmlTree edges;
+		edges.setTag( "edges" );
+		edges.setAttribute( "left", mEdges.x );
+		edges.setAttribute( "top", mEdges.y );
+		edges.setAttribute( "right", mEdges.z );
+		edges.setAttribute( "bottom", mEdges.w );
+		blend.push_back( edges );
+
+		XmlTree gamma;
+		gamma.setTag( "gamma" );
+		gamma.setAttribute( "red", mGamma.x );
+		gamma.setAttribute( "green", mGamma.y );
+		gamma.setAttribute( "blue", mGamma.z );
+		blend.push_back( gamma );
+
+		XmlTree luminance;
+		luminance.setTag( "luminance" );
+		luminance.setAttribute( "red", mLuminance.x );
+		luminance.setAttribute( "green", mLuminance.y );
+		luminance.setAttribute( "blue", mLuminance.z );
+		blend.push_back( luminance );
+	}
+	xml.push_back( blend );
+
 	return xml;
 }
 
@@ -155,10 +188,38 @@ void Warp::fromXml( const XmlTree &xml )
 
 	// load control points
 	mPoints.clear();
-	for( XmlTree::ConstIter child = xml.begin( "controlpoint" ); child != xml.end(); ++child ) {
+	for( auto child = xml.begin( "controlpoint" ); child != xml.end(); ++child ) {
 		float x = child->getAttributeValue<float>( "x", 0.0f );
 		float y = child->getAttributeValue<float>( "y", 0.0f );
 		mPoints.push_back( vec2( x, y ) );
+	}
+
+	// load blend params
+	auto blend = xml.find( "blend" );
+	if( blend != xml.end() ) {
+		mExponent =  blend->getAttributeValue<float>( "exponent", mExponent );
+
+		auto edges = blend->find( "edges" );
+		if( edges != blend->end() ) {
+			mEdges.x = edges->getAttributeValue<float>( "left", mEdges.x );
+			mEdges.y = edges->getAttributeValue<float>( "top", mEdges.y );
+			mEdges.z = edges->getAttributeValue<float>( "right", mEdges.z );
+			mEdges.w = edges->getAttributeValue<float>( "bottom", mEdges.w );
+		}
+
+		auto gamma = blend->find( "gamma" );
+		if( gamma != blend->end() ) {
+			mGamma.x = gamma->getAttributeValue<float>( "red", mGamma.x );
+			mGamma.y = gamma->getAttributeValue<float>( "green", mGamma.y );
+			mGamma.z = gamma->getAttributeValue<float>( "blue", mGamma.z );
+		}
+
+		auto luminance = blend->find( "luminance" );
+		if( luminance != blend->end() ) {
+			mLuminance.x = luminance->getAttributeValue<float>( "red", mLuminance.x );
+			mLuminance.y = luminance->getAttributeValue<float>( "green", mLuminance.y );
+			mLuminance.z = luminance->getAttributeValue<float>( "blue", mLuminance.z );
+		}
 	}
 
 	// reconstruct warp

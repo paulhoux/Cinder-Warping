@@ -112,11 +112,22 @@ void WarpPerspective::draw( const gl::Texture2dRef &texture, const Area &srcArea
 		gl::color( drawColor );
 	}
 
+	// create shader if necessary
+	createShader();
+
 	// draw texture
 	gl::pushModelMatrix();
 	gl::multModelMatrix( getTransform() );
 
-	gl::draw( texture, area, rect );
+	gl::ScopedTextureBind tex0( texture );
+	gl::ScopedGlslProg shader( mShader );
+	mShader->uniform( "uLuminance", mLuminance );
+	mShader->uniform( "uGamma", mGamma );
+	mShader->uniform( "uEdges", mEdges );
+	mShader->uniform( "uExponent", mExponent );
+
+	auto coords = texture->getAreaTexCoords( srcArea );
+	gl::drawSolidRect( rect, coords.getUpperLeft(), coords.getLowerRight() );
 
 	gl::popModelMatrix();
 
@@ -146,6 +157,7 @@ void WarpPerspective::draw( bool controls )
 		gl::pushModelMatrix();
 		gl::multModelMatrix( getTransform() );
 
+		gl::ScopedGlslProg shader( gl::getStockShader( gl::ShaderDef().color() ) );
 		gl::ScopedLineWidth linewidth( 1.0f );
 		glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
@@ -289,6 +301,69 @@ void WarpPerspective::gaussianElimination( float *a, int n ) const
 		for( int j = i + 1; j < n - 1; j++ ) {
 			a[i*n + m] -= a[i*n + j] * a[j*n + m];
 		}
+	}
+}
+
+void WarpPerspective::createShader()
+{
+	if( mShader )
+		return;
+
+	gl::GlslProg::Format fmt;
+	fmt.vertex( CI_GLSL( 150,
+		uniform mat4 ciModelViewProjection;
+
+		in vec4 ciPosition;
+		in vec2 ciTexCoord0;
+		in vec4 ciColor;
+
+		out vec2 vertTexCoord0;
+		out vec4 vertColor;
+
+		void main( void )
+		{
+			vertColor = ciColor;
+			vertTexCoord0 = ciTexCoord0;
+
+			gl_Position = ciModelViewProjection * ciPosition;
+		}
+	) );
+	fmt.fragment( CI_GLSL( 150,
+		uniform sampler2D  uTex0;
+		uniform vec3       uLuminance;
+		uniform vec3       uGamma;
+		uniform vec4       uEdges;
+		uniform float      uExponent;
+
+		in vec2 vertTexCoord0;
+		in vec4 vertColor;
+
+		out vec4 fragColor;
+
+		void main( void )
+		{
+			vec4 texColor = texture( uTex0, vertTexCoord0 );
+
+			float a = 1.0;
+			if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / uEdges.x, 0.0, 1.0 );
+			if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / uEdges.y, 0.0, 1.0 );
+			if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );
+			if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );
+
+			const vec3 one = vec3( 1.0 );
+			vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) )
+				: one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );
+
+			texColor.rgb *= pow( blend, one / uGamma );
+
+			fragColor = texColor;
+		}
+	) );
+	try {
+		mShader = gl::GlslProg::create( fmt );
+	}
+	catch( const std::exception &e ) {
+		console() << e.what() << std::endl;
 	}
 }
 

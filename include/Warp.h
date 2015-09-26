@@ -104,6 +104,44 @@ public:
 	//! set the width and height of the content in pixels
 	virtual void		setSize( int w, int h );
 
+	//! returns the luminance value for the red, green and blue channels, used for edge blending (0.5 = linear)
+	virtual const ci::vec3& getLuminance() const { return mLuminance; }
+	//! set the luminance value for all color channels, used for edge blending (0.5 = linear)
+	virtual void		setLuminance( float gamma ) { mLuminance = ci::vec3( gamma ); }
+	//! set the luminance value for the red, green and blue channels, used for edge blending (0.5 = linear)
+	virtual void		setLuminance( float red, float green, float blue ) { mLuminance.r = red; mLuminance.g = green; mLuminance.b = blue; }
+
+	//! returns the gamma curve value for the red, green and blue channels
+	virtual const ci::vec3& getGamma() const { return mGamma; }
+	//! set the gamma curve value for all color channels
+	virtual void		setGamma( float gamma ) { mGamma = ci::vec3( gamma ); }
+	//! set the gamma curve value for the red, green and blue channels
+	virtual void		setGamma( float red, float green, float blue ) { mGamma.r = red; mGamma.g = green; mGamma.b = blue; }
+
+	//! returns the edge blending curve exponent (1.0 = linear, 2.0 = quadratic)
+	virtual float		getExponent() const { return mExponent; }
+	//! set the edge blending curve exponent  (1.0 = linear, 2.0 = quadratic)
+	virtual void		setExponent( float e ) { mExponent = glm::clamp( e, 1.0f, 100.0f ); }
+
+	//! returns the edge blending area for the left, top, right and bottom edges (values between 0 and 1)
+	virtual ci::vec4	getEdges() const { return 2.0f * mEdges; }
+	//! set the edge blending area for the left, top, right and bottom edges (values between 0 and 1)
+	virtual void		setEdges( float left, float top, float right, float bottom )
+	{
+		mEdges.x = glm::clamp( left * 0.5f, 0.0f, 1.0f );
+		mEdges.y = glm::clamp( top * 0.5f, 0.0f, 1.0f );
+		mEdges.z = glm::clamp( right * 0.5f, 0.0f, 1.0f );
+		mEdges.w = glm::clamp( bottom * 0.5f, 0.0f, 1.0f );
+	}
+	//! set the edge blending area for the left, top, right and bottom edges (values between 0 and 1)
+	virtual void		setEdges( const ci::vec4 &edges )
+	{
+		mEdges.x = glm::clamp( edges.x * 0.5f, 0.0f, 1.0f );
+		mEdges.y = glm::clamp( edges.y * 0.5f, 0.0f, 1.0f );
+		mEdges.z = glm::clamp( edges.z * 0.5f, 0.0f, 1.0f );
+		mEdges.w = glm::clamp( edges.w * 0.5f, 0.0f, 1.0f );
+	}
+
 	//! reset control points to undistorted image
 	virtual void		reset() = 0;
 	//! setup the warp before drawing its contents
@@ -202,6 +240,12 @@ protected:
 	int				mControlsY;
 
 	std::vector<ci::vec2>	mPoints;
+
+	//! edge blending parameters
+	ci::vec3		mLuminance;
+	ci::vec3		mGamma;
+	ci::vec4		mEdges;
+	float			mExponent;
 
 	//! edit mode for all warps
 	static std::atomic<bool>		sIsEditMode;
@@ -369,12 +413,17 @@ protected:
 	//! helper function
 	void gaussianElimination( float * input, int n ) const;
 
+	//!
+	void createShader();
+
 protected:
 	ci::vec2	mSource[4];
 	ci::vec2	mDestination[4];
 
 	ci::mat4	mTransform;
 	ci::mat4	mInverted;
+
+	ci::gl::GlslProgRef	mShader;
 };
 
 // ----------------------------------------------------------------------------------------------------------------
