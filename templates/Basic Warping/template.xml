@@ -4,5 +4,6 @@
 	<requires>nl.cowlumbus.warping</requires>
 	<source replaceContents="true" replaceName="true">src/_TBOX_PREFIX_App.cpp</source>
 	<asset>assets/help.png</asset>
+	<asset>assets/warps.xml</asset>
 </template>
 </cinder>

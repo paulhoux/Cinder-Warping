@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<warpconfig version="1.0" profile="default">
+	<profile name="default">
+		<map id="1" display="1">
+			<warp method="bilinear" width="3" height="2" brightness="1" resolution="64" linear="1" adaptive="0">
+				<controlpoint x="0.550260425" y="0.574630439"/>
+				<controlpoint x="0.534375012" y="0.909871221"/>
+				<controlpoint x="0.711197913" y="0.439675719"/>
+				<controlpoint x="0.705729187" y="0.990939438"/>
+				<controlpoint x="0.90234375" y="0.477825463"/>
+				<controlpoint x="0.918229163" y="0.916547477"/>
+			</warp>
+		</map>
+		<map id="2" display="1">
+			<warp method="perspective" width="2" height="2" brightness="1">
+				<controlpoint x="0.0320312493" y="0.0915593728"/>
+				<controlpoint x="0.328125" y="0.159752026"/>
+				<controlpoint x="0.419731468" y="0.902727246"/>
+				<controlpoint x="0.0297723301" y="0.924545467"/>
+			</warp>
+		</map>
+		<map id="3" display="1">
+			<warp method="perspectivebilinear" width="4" height="4" brightness="1" resolution="20" linear="0" adaptive="0">
+				<controlpoint x="0" y="0"/>
+				<controlpoint x="-0.0222089738" y="0.333411425"/>
+				<controlpoint x="-0.0268037599" y="0.66770786"/>
+				<controlpoint x="0" y="1"/>
+				<controlpoint x="0.329147547" y="-0.0667858273"/>
+				<controlpoint x="0.338711888" y="0.24238874"/>
+				<controlpoint x="0.321441501" y="0.551850677"/>
+				<controlpoint x="0.327328354" y="0.860097468"/>
+				<controlpoint x="0.665335119" y="-0.0428568199"/>
+				<controlpoint x="0.71612525" y="0.253453076"/>
+				<controlpoint x="0.709605575" y="0.554461539"/>
+				<controlpoint x="0.67562449" y="0.85492748"/>
+				<controlpoint x="1" y="0"/>
+				<controlpoint x="1.07964885" y="0.331701636"/>
+				<controlpoint x="1.06867218" y="0.669165134"/>
+				<controlpoint x="1" y="1"/>
+				<corner x="0.367968738" y="0.062470194"/>
+				<corner x="0.941666663" y="0.0534096323"/>
+				<corner x="0.919791639" y="0.454458743"/>
+				<corner x="0.494531244" y="0.494515985"/>
+			</warp>
+		</map>
+	</profile>
+</warpconfig>
+

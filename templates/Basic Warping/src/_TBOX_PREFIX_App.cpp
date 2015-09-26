@@ -34,6 +34,8 @@ using namespace std;
 
 class _TBOX_PREFIX_App : public App {
 public:
+	static void prepare( Settings *settings );
+
 	void setup() override;
 	void cleanup() override;
 	void update() override;
@@ -61,6 +63,11 @@ private:
 	Area			mSrcArea;
 };
 
+void _TBOX_PREFIX_App::prepare( Settings *settings )
+{
+	settings->setWindowSize( 1440, 900 );
+}
+
 void _TBOX_PREFIX_App::setup()
 {
 	mUseBeginEnd = false;
@@ -75,12 +82,15 @@ void _TBOX_PREFIX_App::setup()
 	}
 	else {
 		// otherwise create a warp from scratch
+		mWarps.push_back( WarpBilinear::create() );
+		mWarps.push_back( WarpPerspective::create() );
 		mWarps.push_back( WarpPerspectiveBilinear::create() );
 	}
 
 	// load test image
 	try {
-		mImage = gl::Texture::create( loadImage( loadAsset( "help.png" ) ), gl::Texture2d::Format().loadTopDown() );
+		mImage = gl::Texture::create( loadImage( loadAsset( "help.png" ) ), 
+									  gl::Texture2d::Format().loadTopDown().mipmap( true ).minFilter( GL_LINEAR_MIPMAP_LINEAR ) );
 
 		mSrcArea = mImage->getBounds();
 
@@ -231,4 +241,4 @@ void _TBOX_PREFIX_App::updateWindowTitle()
 		getWindow()->setTitle( "Warping Sample - Using draw()" );
 }
 
-CINDER_APP( _TBOX_PREFIX_App, RendererGl( RendererGl::Options().msaa( 16 ) ) )
+CINDER_APP( _TBOX_PREFIX_App, RendererGl( RendererGl::Options().msaa( 8 ) ), &_TBOX_PREFIX_App::prepare )
