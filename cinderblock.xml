@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <cinder>
 <block
-	name="Warping"
+	name="Cinder-Warping"
 	id="nl.cowlumbus.warping"
 	author="Paul Houx"
 	license="GPL, Commercial"
-	summary="Warping library for Cinder"
+	summary="A Cinder block that enables you to easily create editable bi-linear and perspective warps, or a combination of the two."
 	url="https://github.com/paulhoux/Cinder-Warping"
 	git="git://github.com/paulhoux/Cinder-Warping.git"
 	>
