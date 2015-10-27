@@ -73,7 +73,7 @@ public:
 	static bool			isEditModeEnabled() { return (bool)sIsEditMode; };
 	static void			enableEditMode( bool enabled = true ) { sIsEditMode = enabled; };
 	static void			disableEditMode() { sIsEditMode = false; };
-	static void			toggleEditMode() { sIsEditMode = !sIsEditMode; };
+	static void			toggleEditMode() { bool exp = (bool)sIsEditMode; sIsEditMode.compare_exchange_strong( exp, !(bool)sIsEditMode ); };
 
 	//! returns the type of the warp
 	WarpType			getType() const { return mType; };
@@ -247,12 +247,10 @@ protected:
 	ci::vec4		mEdges;
 	float			mExponent;
 
-	//! edit mode for all warps
-	static std::atomic<bool>		sIsEditMode;
 	//! time of last control point selection
-	static std::atomic<double>		sSelectedTime;
+	double				mSelectedTime;
 	//! keep track of mouse position
-	static std::atomic<ci::ivec2>	sMouse;
+	mutable ci::ivec2	mMouse;
 
 	static const int	MAX_NUM_CONTROL_POINTS = 1024;
 
@@ -274,6 +272,9 @@ private:
 
 	ci::gl::VboRef		mInstanceDataVbo;
 	ci::gl::BatchRef	mInstancedBatch;
+
+	//! edit mode for all warps
+	static std::atomic<bool>	sIsEditMode;
 };
 
 // ----------------------------------------------------------------------------------------------------------------

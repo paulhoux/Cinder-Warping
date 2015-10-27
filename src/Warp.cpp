@@ -32,9 +32,7 @@ using namespace ci::app;
 namespace ph {
 namespace warping {
 
-std::atomic<bool>	Warp::sIsEditMode = false;
-std::atomic<double>	Warp::sSelectedTime = 0.0;
-std::atomic<ivec2>	Warp::sMouse = ivec2( 0, 0 );
+std::atomic<bool> Warp::sIsEditMode{ false };
 
 Warp::Warp( WarpType type )
 	: mType( type )
@@ -49,6 +47,7 @@ Warp::Warp( WarpType type )
 	, mGamma( 1.0f )
 	, mEdges( 0.0f )
 	, mExponent( 2.0f )
+	, mSelectedTime( 0 )
 {
 	mWindowSize = vec2( float( mWidth ), float( mHeight ) );
 }
@@ -197,7 +196,7 @@ void Warp::fromXml( const XmlTree &xml )
 	// load blend params
 	auto blend = xml.find( "blend" );
 	if( blend != xml.end() ) {
-		mExponent =  blend->getAttributeValue<float>( "exponent", mExponent );
+		mExponent = blend->getAttributeValue<float>( "exponent", mExponent );
 
 		auto edges = blend->find( "edges" );
 		if( edges != blend->end() ) {
@@ -261,7 +260,7 @@ void Warp::selectControlPoint( unsigned index )
 	if( index >= mPoints.size() || index == mSelected ) return;
 
 	mSelected = index;
-	sSelectedTime = app::getElapsedSeconds();
+	mSelectedTime = app::getElapsedSeconds();
 }
 
 void Warp::deselectControlPoint()
@@ -272,6 +271,9 @@ void Warp::deselectControlPoint()
 unsigned Warp::findControlPoint( const vec2 &pos, float *distance ) const
 {
 	unsigned index;
+
+	// store mouse position for later use in e.g. WarpBilinear::keyDown().
+	mMouse = pos;
 
 	// find closest control point
 	float dist = 10.0e6f;
@@ -404,22 +406,16 @@ void Warp::writeSettings( const WarpList &warps, const DataTargetRef &target )
 
 bool Warp::handleMouseMove( WarpList &warps, MouseEvent &event )
 {
-	// store mouse position 
-	sMouse = event.getPos();
-
 	// find and select closest control point
-	selectClosestControlPoint( warps, sMouse );
+	selectClosestControlPoint( warps, event.getPos() );
 
 	return false;
 }
 
 bool Warp::handleMouseDown( WarpList &warps, MouseEvent &event )
 {
-	// store mouse position 
-	sMouse = event.getPos();
-
 	// find and select closest control point
-	selectClosestControlPoint( warps, sMouse );
+	selectClosestControlPoint( warps, event.getPos() );
 
 	for( WarpReverseIter itr = warps.rbegin(); itr != warps.rend() && !event.isHandled(); ++itr )
 		( *itr )->mouseDown( event );
@@ -599,7 +595,7 @@ void Warp::resize()
 
 void Warp::queueControlPoint( const vec2 &pt, bool selected, bool attached )
 {
-	float scale = 0.9f + 0.2f * math<float>::sin( 6.0f * float( app::getElapsedSeconds() - sSelectedTime ) );
+	float scale = 0.9f + 0.2f * math<float>::sin( 6.0f * float( app::getElapsedSeconds() - mSelectedTime ) );
 
 	if( selected && attached ) { queueControlPoint( pt, Color( 0.0f, 0.8f, 0.0f ) ); }
 	else if( selected ) { queueControlPoint( pt, Color( 0.9f, 0.9f, 0.9f ), scale ); }
@@ -690,7 +686,7 @@ void Warp::drawControlPoints()
 		//gl::setMatricesWindow( getWindowSize() );
 
 		// draw instanced
-		mInstancedBatch->drawInstanced( (GLsizei) mControlPoints.size() );
+		mInstancedBatch->drawInstanced( (GLsizei)mControlPoints.size() );
 	}
 
 	mControlPoints.clear();

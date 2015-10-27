@@ -223,7 +223,7 @@ void WarpBilinear::keyDown( KeyEvent &event )
 
 	// in case we need to find the closest control point
 	float distance;
-	vec2  pt = (ivec2) Warp::sMouse;
+	vec2  pt = (ivec2) mMouse;
 
 	switch( event.getCode() ) {
 		case KeyEvent::KEY_F1:
