@@ -235,6 +235,7 @@ void WarpPerspective::keyDown( KeyEvent &event )
 	event.setHandled( true );
 }
 
+// Adapted from code found here: http://forum.openframeworks.cc/t/quad-warping-homography-without-opencv/3121/19
 mat4 WarpPerspective::getPerspectiveTransform( const vec2 src[4], const vec2 dst[4] ) const
 {
 	float p[8][9] = {
@@ -258,6 +259,7 @@ mat4 WarpPerspective::getPerspectiveTransform( const vec2 src[4], const vec2 dst
 	return result;
 }
 
+// Adapted from code found here: http://forum.openframeworks.cc/t/quad-warping-homography-without-opencv/3121/19
 void WarpPerspective::gaussianElimination( float *a, int n ) const
 {
 	int i = 0;
