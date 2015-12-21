@@ -20,13 +20,13 @@
 
 #include "Warp.h"
 
+#include "cinder/Xml.h"
 #include "cinder/app/App.h"
-#include "cinder/gl/scoped.h"
 #include "cinder/gl/Context.h"
 #include "cinder/gl/Texture.h"
-#include "cinder/Xml.h"
+#include "cinder/gl/scoped.h"
 
- //
+//
 
 using namespace ci;
 using namespace ci::app;
@@ -35,23 +35,19 @@ namespace ph {
 namespace warping {
 
 WarpBilinear::WarpBilinear( const ci::gl::Fbo::Format &format )
-	: Warp( BILINEAR )
-	, mIsLinear( false )
-	, mIsAdaptive( true )
-	, mX1( 0.0f )
-	, mY1( 0.0f )
-	, mX2( 1.0f )
-	, mY2( 1.0f )
-	, mResolutionX( 0 )
-	, mResolutionY( 0 )
-	, mFboFormat( format )
-	, mResolution( 16 ) // higher value is coarser mesh
+    : Warp( BILINEAR )
+    , mIsLinear( false )
+    , mIsAdaptive( true )
+    , mX1( 0.0f )
+    , mY1( 0.0f )
+    , mX2( 1.0f )
+    , mY2( 1.0f )
+    , mResolutionX( 0 )
+    , mResolutionY( 0 )
+    , mFboFormat( format )
+    , mResolution( 16 ) // higher value is coarser mesh
 {
 	reset();
-}
-
-WarpBilinear::~WarpBilinear()
-{
 }
 
 XmlTree WarpBilinear::toXml() const
@@ -93,8 +89,8 @@ void WarpBilinear::draw( const gl::Texture2dRef &texture, const Area &srcArea, c
 	gl::ScopedTextureBind tex0( texture );
 
 	// clip against bounds
-	Area	area = srcArea;
-	Rectf	rect = destRect;
+	Area  area = srcArea;
+	Rectf rect = destRect;
 	clip( area, rect );
 
 	// set texture coordinates
@@ -156,8 +152,10 @@ void WarpBilinear::end()
 	ctx->popFramebuffer();
 
 	// draw flipped
-	Area srcArea = mFbo->getBounds();
-	int32_t t = srcArea.y1; srcArea.y1 = srcArea.y2; srcArea.y2 = t;
+	Area    srcArea = mFbo->getBounds();
+	int32_t t = srcArea.y1;
+	srcArea.y1 = srcArea.y2;
+	srcArea.y2 = t;
 
 	draw( mFbo->getColorTexture(), srcArea, Rectf( getBounds() ) );
 }
@@ -223,105 +221,105 @@ void WarpBilinear::keyDown( KeyEvent &event )
 
 	// in case we need to find the closest control point
 	float distance;
-	vec2  pt = (ivec2) mMouse;
+	vec2  pt = (ivec2)mMouse;
 
 	switch( event.getCode() ) {
-		case KeyEvent::KEY_F1:
-			// reduce the number of horizontal control points
-			if( !event.isShiftDown() )
-				setNumControlX( ( mControlsX + 1 ) / 2 );
-			else setNumControlX( mControlsX - 1 );
-			// find closest control point
-			mSelected = findControlPoint( pt, &distance );
-			break;
-		case KeyEvent::KEY_F2:
-			// increase the number of horizontal control points
-			if( !event.isShiftDown() )
-				setNumControlX( 2 * mControlsX - 1 );
-			else setNumControlX( mControlsX + 1 );
-			// find closest control point
-			mSelected = findControlPoint( pt, &distance );
-			break;
-		case KeyEvent::KEY_F3:
-			// reduce the number of vertical control points
-			if( !event.isShiftDown() )
-				setNumControlY( ( mControlsY + 1 ) / 2 );
-			else setNumControlY( mControlsY - 1 );
-			// find closest control point
-			mSelected = findControlPoint( pt, &distance );
-			break;
-		case KeyEvent::KEY_F4:
-			// increase the number of vertical control points
-			if( !event.isShiftDown() )
-				setNumControlY( 2 * mControlsY - 1 );
-			else setNumControlY( mControlsY + 1 );
-			// find closest control point
-			mSelected = findControlPoint( pt, &distance );
-			break;
-		case KeyEvent::KEY_m:
-			// toggle between linear and curved mapping
-			mIsLinear = !mIsLinear;
+	case KeyEvent::KEY_F1:
+		// reduce the number of horizontal control points
+		if( !event.isShiftDown() )
+			setNumControlX( ( mControlsX + 1 ) / 2 );
+		else
+			setNumControlX( mControlsX - 1 );
+		// find closest control point
+		mSelected = findControlPoint( pt, &distance );
+		break;
+	case KeyEvent::KEY_F2:
+		// increase the number of horizontal control points
+		if( !event.isShiftDown() )
+			setNumControlX( 2 * mControlsX - 1 );
+		else
+			setNumControlX( mControlsX + 1 );
+		// find closest control point
+		mSelected = findControlPoint( pt, &distance );
+		break;
+	case KeyEvent::KEY_F3:
+		// reduce the number of vertical control points
+		if( !event.isShiftDown() )
+			setNumControlY( ( mControlsY + 1 ) / 2 );
+		else
+			setNumControlY( mControlsY - 1 );
+		// find closest control point
+		mSelected = findControlPoint( pt, &distance );
+		break;
+	case KeyEvent::KEY_F4:
+		// increase the number of vertical control points
+		if( !event.isShiftDown() )
+			setNumControlY( 2 * mControlsY - 1 );
+		else
+			setNumControlY( mControlsY + 1 );
+		// find closest control point
+		mSelected = findControlPoint( pt, &distance );
+		break;
+	case KeyEvent::KEY_m:
+		// toggle between linear and curved mapping
+		mIsLinear = !mIsLinear;
+		mIsDirty = true;
+		break;
+	case KeyEvent::KEY_F5:
+		// decrease the mesh resolution
+		if( mResolution < 64 ) {
+			mResolution += 4;
 			mIsDirty = true;
-			break;
-		case KeyEvent::KEY_F5:
-			// decrease the mesh resolution
-			if( mResolution < 64 ) {
-				mResolution += 4;
-				mIsDirty = true;
-			}
-			break;
-		case KeyEvent::KEY_F6:
-			// increase the mesh resolution
-			if( mResolution > 4 ) {
-				mResolution -= 4;
-				mIsDirty = true;
-			}
-			break;
-		case KeyEvent::KEY_F7:
-			// toggle adaptive mesh resolution
-			mIsAdaptive = !mIsAdaptive;
-			mIsDirty = true;
-			break;
-		case KeyEvent::KEY_F9:
-			// rotate content ccw
-			break;
-		case KeyEvent::KEY_F10:
-			// rotate content cw
-			break;
-		case KeyEvent::KEY_F11:
-		{
-			// flip control points horizontally
-			std::vector<vec2> points;
-			for( int x = mControlsX - 1; x >= 0; --x ) {
-				for( int y = 0; y < mControlsY; ++y ) {
-					int i = ( x * mControlsY + y );
-					points.push_back( mPoints[i] );
-				}
-			}
-			mPoints = points;
-			mIsDirty = true;
-			// find closest control point
-			mSelected = findControlPoint( pt, &distance );
 		}
 		break;
-		case KeyEvent::KEY_F12:
-		{
-			// flip control points vertically
-			std::vector<vec2> points;
-			for( int x = 0; x < mControlsX; ++x ) {
-				for( int y = mControlsY - 1; y >= 0; --y ) {
-					int i = ( x * mControlsY + y );
-					points.push_back( mPoints[i] );
-				}
-			}
-			mPoints = points;
+	case KeyEvent::KEY_F6:
+		// increase the mesh resolution
+		if( mResolution > 4 ) {
+			mResolution -= 4;
 			mIsDirty = true;
-			// find closest control point
-			mSelected = findControlPoint( pt, &distance );
 		}
 		break;
-		default:
-			return;
+	case KeyEvent::KEY_F7:
+		// toggle adaptive mesh resolution
+		mIsAdaptive = !mIsAdaptive;
+		mIsDirty = true;
+		break;
+	case KeyEvent::KEY_F9:
+		// rotate content ccw
+		break;
+	case KeyEvent::KEY_F10:
+		// rotate content cw
+		break;
+	case KeyEvent::KEY_F11: {
+		// flip control points horizontally
+		std::vector<vec2> points;
+		for( int x = mControlsX - 1; x >= 0; --x ) {
+			for( int y = 0; y < mControlsY; ++y ) {
+				int i = ( x * mControlsY + y );
+				points.push_back( mPoints[i] );
+			}
+		}
+		mPoints = points;
+		mIsDirty = true;
+		// find closest control point
+		mSelected = findControlPoint( pt, &distance );
+	} break;
+	case KeyEvent::KEY_F12: {
+		// flip control points vertically
+		std::vector<vec2> points;
+		for( int x = 0; x < mControlsX; ++x ) {
+			for( int y = mControlsY - 1; y >= 0; --y ) {
+				int i = ( x * mControlsY + y );
+				points.push_back( mPoints[i] );
+			}
+		}
+		mPoints = points;
+		mIsDirty = true;
+		// find closest control point
+		mSelected = findControlPoint( pt, &distance );
+	} break;
+	default:
+		return;
 	}
 
 	event.setHandled( true );
@@ -347,7 +345,8 @@ void WarpBilinear::createBuffers()
 void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 {
 	// convert from number of quads to number of vertices
-	++resolutionX;	++resolutionY;
+	++resolutionX;
+	++resolutionY;
 
 	// find a value for resolutionX and resolutionY that can be
 	// evenly divided by mControlsX and mControlsY
@@ -379,7 +378,7 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	int numIndices = numTris * 3;
 
 	//
-	gl::VboMesh::Layout	layout;
+	gl::VboMesh::Layout layout;
 	layout.interleave( false );
 	layout.attrib( geom::POSITION, 3 );
 	layout.attrib( geom::TEX_COORD_0, 2 );
@@ -393,9 +392,9 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	int i = 0;
 	int j = 0;
 
-	std::vector<vec3>		positions;
-	std::vector<uint32_t>	indices( numIndices );
-	std::vector<vec2>		texCoords( numVertices );
+	std::vector<vec3>     positions;
+	std::vector<uint32_t> indices( numIndices );
+	std::vector<vec2>     texCoords( numVertices );
 
 	for( int x = 0; x < resolutionX; ++x ) {
 		for( int y = 0; y < resolutionY; ++y ) {
@@ -433,17 +432,17 @@ void WarpBilinear::updateMesh()
 	if( !mVboMesh ) return;
 	if( !mIsDirty ) return;
 
-	vec2			p;
-	float			u, v;
-	int				col, row;
+	vec2  p;
+	float u, v;
+	int   col, row;
 
-	std::vector<vec2>	cols, rows;
+	std::vector<vec2> cols, rows;
 
 #if USE_MAPPED_BUFFER
 	auto mappedMesh = mVboMesh->mapAttrib3f( geom::POSITION, false );
 #else
 	std::vector<vec3> positions( mResolutionX * mResolutionY );
-	int index = 0;
+	int               index = 0;
 #endif
 
 	for( int x = 0; x < mResolutionX; ++x ) {
@@ -484,7 +483,6 @@ void WarpBilinear::updateMesh()
 #else
 			positions[index++] = vec3( p.x, p.y, 0 );
 #endif
-
 		}
 	}
 
@@ -519,8 +517,7 @@ vec2 WarpBilinear::cubicInterpolate( const std::vector<vec2> &knots, float t ) c
 {
 	assert( knots.size() >= 4 );
 
-	return knots[1] + 0.5f * t*( knots[2] - knots[0] + t*( 2.0f*knots[0] - 5.0f*knots[1] +
-														   4.0f*knots[2] - knots[3] + t*( 3.0f*( knots[1] - knots[2] ) + knots[3] - knots[0] ) ) );
+	return knots[1] + 0.5f * t * ( knots[2] - knots[0] + t * ( 2.0f * knots[0] - 5.0f * knots[1] + 4.0f * knots[2] - knots[3] + t * ( 3.0f * ( knots[1] - knots[2] ) + knots[3] - knots[0] ) ) );
 }
 
 void WarpBilinear::setNumControlX( int n )
@@ -584,7 +581,7 @@ void WarpBilinear::setNumControlX( int n )
 		}
 	}
 
-	// copy new control points 
+	// copy new control points
 	mPoints = temp;
 	mControlsX = n;
 
@@ -651,7 +648,7 @@ void WarpBilinear::setNumControlY( int n )
 		}
 	}
 
-	// copy new control points 
+	// copy new control points
 	mPoints = temp;
 	mControlsY = n;
 
@@ -664,70 +661,68 @@ void WarpBilinear::createShader()
 		return;
 
 	gl::GlslProg::Format fmt;
-	fmt.vertex( CI_GLSL( 150,
-		uniform mat4 ciModelViewProjection;
-		
-		in vec4 ciPosition;
-		in vec2 ciTexCoord0;
-		in vec4 ciColor;
-		
-		out vec2 vertTexCoord0;
-		out vec4 vertColor;
-		
-		void main(void) {
-			vertColor = ciColor;
-			vertTexCoord0 = ciTexCoord0;
-		
-			gl_Position = ciModelViewProjection * ciPosition;
-		}
-		));
-	fmt.fragment( CI_GLSL( 150,
-		uniform sampler2D  uTex0;
-		uniform vec4       uExtends;
-		uniform vec3       uLuminance;
-		uniform vec3       uGamma;
-		uniform vec4       uEdges;
-		uniform float      uExponent;
-		uniform bool       uEditMode;
-		
-		in vec2 vertTexCoord0;
-		in vec4 vertColor;
-		
-		out vec4 fragColor;
-		
-		float grid( in vec2 uv, in vec2 size )
-		{
-			vec2 coord = uv / size;
-			vec2 grid = abs( fract( coord - 0.5 ) - 0.5 ) / ( 2.0 * fwidth( coord ) );
-			float line = min( grid.x, grid.y );
-			return 1.0 - min( line, 1.0 );
-		}
-		
-		void main(void) {
-			vec4 texColor = texture( uTex0, vertTexCoord0 );
-
-			float a = 1.0;
-			if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / uEdges.x, 0.0, 1.0 );
-			if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / uEdges.y, 0.0, 1.0 );
-			if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );
-			if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );
-
-			const vec3 one = vec3( 1.0 );
-			vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) )
-				: one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );
-
-			texColor.rgb *= pow( blend, one / uGamma );
-		
-			if( uEditMode ) {
-				float f = grid(vertTexCoord0.xy * uExtends.xy, uExtends.zw );
-				vec4 gridColor = vec4( 1 );
-				fragColor = mix( texColor, gridColor, f );
-			}
-			else {
-				fragColor = texColor;
-			}
-		}
-		));
+	fmt.vertex(
+	    CI_GLSL( 150,
+	        "uniform mat4 ciModelViewProjection;\n"
+	        ""
+	        "in vec4 ciPosition;\n"
+	        "in vec2 ciTexCoord0;\n"
+	        "in vec4 ciColor;\n"
+	        ""
+	        "out vec2 vertTexCoord0;\n"
+	        "out vec4 vertColor;\n"
+	        ""
+	        "void main( void ) {\n"
+	        "vertColor = ciColor;\n"
+	        "vertTexCoord0 = ciTexCoord0;\n"
+	        ""
+	        "gl_Position = ciModelViewProjection * ciPosition;\n"
+	        "}" ) );
+	fmt.fragment(
+	    CI_GLSL( 150,
+	        "uniform sampler2D uTex0;\n"
+	        "uniform vec4 uExtends;\n"
+	        "uniform vec3 uLuminance;\n"
+	        "uniform vec3 uGamma;\n"
+	        "uniform vec4  uEdges;\n"
+	        "uniform float uExponent;\n"
+	        "uniform bool  uEditMode;\n"
+	        ""
+	        "in vec2 vertTexCoord0;\n"
+	        "in vec4 vertColor;\n"
+	        ""
+	        "out vec4 fragColor;\n"
+	        ""
+	        "float grid( in vec2 uv, in vec2 size ) {\n"
+	        "	vec2 coord = uv / size;\n"
+	        "	vec2 grid = abs( fract( coord - 0.5 ) - 0.5 ) / ( 2.0 * fwidth( coord ) );\n"
+	        "	float line = min( grid.x, grid.y );\n"
+	        "	return 1.0 - min( line, 1.0 );\n"
+	        "}\n"
+	        ""
+	        "void main( void ) {\n"
+	        "	vec4 texColor = texture( uTex0, vertTexCoord0 );\n"
+	        ""
+	        "	float a = 1.0;\n"
+	        "	if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / uEdges.x, 0.0, 1.0 );\n"
+	        "	if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / uEdges.y, 0.0, 1.0 );\n"
+	        "	if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );\n"
+	        "	if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );\n"
+	        ""
+	        "	const vec3 one = vec3( 1.0 );\n"
+	        "	vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) ) : one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );\n"
+	        ""
+	        "	texColor.rgb *= pow( blend, one / uGamma );\n"
+	        ""
+	        "	if( uEditMode ) {\n"
+	        "		float f = grid( vertTexCoord0.xy * uExtends.xy, uExtends.zw );\n"
+	        "		vec4  gridColor = vec4( 1 );\n"
+	        "		fragColor = mix( texColor, gridColor, f );\n"
+	        "	}\n"
+	        "	else {\n"
+	        "		fragColor = texColor;\n"
+	        "	}\n"
+	        "}" ) );
 	try {
 		mShader = gl::GlslProg::create( fmt );
 	}
@@ -761,8 +756,5 @@ void WarpBilinear::setTexCoords( float x1, float y1, float x2, float y2 )
 	mX2 = x2;
 	mY2 = y2;
 }
-
 }
 } // namespace ph::warping
-
-

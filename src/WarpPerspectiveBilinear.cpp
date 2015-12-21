@@ -20,8 +20,8 @@
 
 #include "Warp.h"
 
-#include "cinder/app/App.h"
 #include "cinder/Xml.h"
+#include "cinder/app/App.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -30,20 +30,16 @@ namespace ph {
 namespace warping {
 
 WarpPerspectiveBilinear::WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format )
-	: WarpBilinear( format )
+    : WarpBilinear( format )
 {
-	// change type 
+	// change type
 	mType = PERSPECTIVE_BILINEAR;
 
 	// create perspective warp
 	mWarp = WarpPerspectiveRef( new WarpPerspective() );
 }
 
-WarpPerspectiveBilinear::~WarpPerspectiveBilinear()
-{
-}
-
-XmlTree	WarpPerspectiveBilinear::toXml() const
+XmlTree WarpPerspectiveBilinear::toXml() const
 {
 	XmlTree xml = WarpBilinear::toXml();
 
@@ -154,7 +150,7 @@ void WarpPerspectiveBilinear::keyDown( KeyEvent &event )
 		break;
 	case KeyEvent::KEY_F9:
 	case KeyEvent::KEY_F10:
-		// let only the Perspective warp handle rotating 
+		// let only the Perspective warp handle rotating
 		mWarp->keyDown( event );
 		break;
 	case KeyEvent::KEY_F11:
@@ -175,7 +171,7 @@ void WarpPerspectiveBilinear::resize()
 	// make content size compatible with WarpBilinear's mWindowSize
 	mWarp->setSize( getWindowSize() );
 
-	// 
+	//
 	mWarp->resize();
 	WarpBilinear::resize();
 }
@@ -263,24 +259,25 @@ void WarpPerspectiveBilinear::deselectControlPoint()
 
 bool WarpPerspectiveBilinear::isCorner( unsigned index ) const
 {
-	unsigned numControls = (unsigned) ( mControlsX * mControlsY );
+	unsigned numControls = (unsigned)( mControlsX * mControlsY );
 
 	return ( index == 0 || index == ( numControls - mControlsY ) || index == ( numControls - 1 ) || index == ( mControlsY - 1 ) );
 }
 
 unsigned WarpPerspectiveBilinear::convertIndex( unsigned index ) const
 {
-	unsigned numControls = (unsigned) ( mControlsX * mControlsY );
+	unsigned numControls = (unsigned)( mControlsX * mControlsY );
 
-	if( index == 0 ) return 0;
-	else if( index == ( numControls - mControlsY ) ) return 2;
-	else if( index == ( numControls - 1 ) ) return 3;
-	else if( index == ( mControlsY - 1 ) ) return 1;
-	else return index;
+	if( index == 0 )
+		return 0;
+	else if( index == ( numControls - mControlsY ) )
+		return 2;
+	else if( index == ( numControls - 1 ) )
+		return 3;
+	else if( index == ( mControlsY - 1 ) )
+		return 1;
+	else
+		return index;
 }
-
 }
 } // namespace ph::warping
-
-
-
