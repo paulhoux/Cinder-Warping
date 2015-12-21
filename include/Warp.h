@@ -165,6 +165,10 @@ public:
 	virtual void		setControlPoint( unsigned index, const ci::vec2 &pos );
 	//! moves the specified control point 
 	virtual void		moveControlPoint( unsigned index, const ci::vec2 &shift );
+	//! get the number of control points
+	virtual unsigned int getNumControlPoints() const { return mPoints.size(); }
+	//! get the index of the currently selected control point
+	virtual unsigned int getSelectedControlPoint() const { return mSelected; }
 	//! select one of the control points
 	virtual void		selectControlPoint( unsigned index );
 	//! deselect the selected control point
