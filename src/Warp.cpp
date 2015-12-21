@@ -466,6 +466,14 @@ bool Warp::handleResize( WarpList &warps )
 	return false;
 }
 
+bool Warp::handleResize( WarpList &warps, const ivec2 &size )
+{
+	for ( WarpIter itr = warps.begin(); itr != warps.end(); ++itr )
+		(*itr)->resize( size );
+
+	return false;
+}
+
 void Warp::mouseMove( cinder::app::MouseEvent &event )
 {
 	float distance;
@@ -589,7 +597,12 @@ void Warp::keyUp( KeyEvent &event )
 
 void Warp::resize()
 {
-	mWindowSize = vec2( getWindowSize() );
+	resize( getWindowSize() );
+}
+
+void Warp::resize( const ivec2 &size )
+{
+	mWindowSize = vec2( size );
 	mIsDirty = true;
 }
 

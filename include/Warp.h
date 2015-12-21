@@ -210,6 +210,7 @@ public:
 
 	//! handles resize events for multiple warps
 	static bool			handleResize( WarpList &warps );
+	static bool			handleResize( WarpList &warps, const ci::ivec2 &size );
 
 	virtual void		mouseMove( ci::app::MouseEvent &event );
 	virtual void		mouseDown( ci::app::MouseEvent &event );
@@ -220,6 +221,7 @@ public:
 	virtual void		keyUp( ci::app::KeyEvent &event );
 
 	virtual void		resize();
+	virtual void		resize( const ci::ivec2 &size );
 protected:
 	//! draw the warp and its editing interface
 	virtual void		draw( bool controls = true ) = 0;
