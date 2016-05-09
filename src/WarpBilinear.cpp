@@ -193,7 +193,8 @@ void WarpBilinear::draw( bool controls )
 	mShader->uniform( "uEdges", mEdges );
 	mShader->uniform( "uExponent", mExponent );
 	mShader->uniform( "uEditMode", (bool)isEditModeEnabled() );
-	mShader->uniform("uShift", mShift);
+	mShader->uniform( "uShift", mShift + vec4(-mX1, -mY1, 1.f - mX2, 1.f - mY2) );
+	
 
 	mBatch->draw();
 
