@@ -121,7 +121,7 @@ void WarpPerspective::draw( const gl::Texture2dRef &texture, const Area &srcArea
 	mShader->uniform( "uGamma", mGamma );
 	mShader->uniform( "uEdges", mEdges );
 	mShader->uniform( "uExponent", mExponent );
-
+	mShader->uniform("uShift", mShift);
 	auto coords = texture->getAreaTexCoords( srcArea );
 	gl::drawSolidRect( rect, coords.getUpperLeft(), coords.getLowerRight() );
 
@@ -333,6 +333,7 @@ void WarpPerspective::createShader()
 	    "uniform vec3 uGamma;\n"
 	    "uniform vec4  uEdges;\n"
 	    "uniform float uExponent;\n"
+		"uniform vec4 uShift;\n"
 	    ""
 	    "in vec2 vertTexCoord0;\n"
 	    "in vec4 vertColor;\n"
@@ -343,10 +344,10 @@ void WarpPerspective::createShader()
 	    "	vec4 texColor = texture( uTex0, vertTexCoord0 );\n"
 	    ""
 	    "	float a = 1.0;\n"
-	    "	if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / uEdges.x, 0.0, 1.0 );\n"
-	    "	if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / uEdges.y, 0.0, 1.0 );\n"
-	    "	if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );\n"
-	    "	if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );\n"
+		"	if( uEdges.x > 0.0 ) a *= clamp( ( uShift.x + vertTexCoord0.x ) / uEdges.x, 0.0, 1.0 );\n"
+		"	if( uEdges.y > 0.0 ) a *= clamp( ( uShift.y + vertTexCoord0.y ) / uEdges.y, 0.0, 1.0 );\n"
+	    "	if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - uShift.z - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );\n"
+	    "	if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - uShift.w - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );\n"
 	    ""
 	    "	const vec3 one = vec3( 1.0 );\n"
 	    "	vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) ) : one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );\n"

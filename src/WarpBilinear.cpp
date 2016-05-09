@@ -193,6 +193,8 @@ void WarpBilinear::draw( bool controls )
 	mShader->uniform( "uEdges", mEdges );
 	mShader->uniform( "uExponent", mExponent );
 	mShader->uniform( "uEditMode", (bool)isEditModeEnabled() );
+	mShader->uniform( "uShift", mShift + vec4(-mX1, -mY1, 1.f - mX2, 1.f - mY2) );
+	
 
 	mBatch->draw();
 
@@ -689,6 +691,7 @@ void WarpBilinear::createShader()
 	    "uniform vec4  uEdges;\n"
 	    "uniform float uExponent;\n"
 	    "uniform bool  uEditMode;\n"
+		"uniform vec4 uShift;\n"
 	    ""
 	    "in vec2 vertTexCoord0;\n"
 	    "in vec4 vertColor;\n"
@@ -706,10 +709,10 @@ void WarpBilinear::createShader()
 	    "	vec4 texColor = texture( uTex0, vertTexCoord0 );\n"
 	    ""
 	    "	float a = 1.0;\n"
-	    "	if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / uEdges.x, 0.0, 1.0 );\n"
-	    "	if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / uEdges.y, 0.0, 1.0 );\n"
-	    "	if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );\n"
-	    "	if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );\n"
+		"	if( uEdges.x > 0.0 ) a *= clamp( ( uShift.x + vertTexCoord0.x ) / uEdges.x, 0.0, 1.0 );\n"
+		"	if( uEdges.y > 0.0 ) a *= clamp( ( uShift.y + vertTexCoord0.y ) / uEdges.y, 0.0, 1.0 );\n"
+	    "	if( uEdges.z > 0.0 ) a *= clamp( ( 1.0 - uShift.z - vertTexCoord0.x ) / uEdges.z, 0.0, 1.0 );\n"
+	    "	if( uEdges.w > 0.0 ) a *= clamp( ( 1.0 - uShift.w - vertTexCoord0.y ) / uEdges.w, 0.0, 1.0 );\n"
 	    ""
 	    "	const vec3 one = vec3( 1.0 );\n"
 	    "	vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) ) : one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );\n"

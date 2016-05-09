@@ -159,6 +159,24 @@ class Warp : public std::enable_shared_from_this<Warp> {
 		mEdges.z = glm::clamp( edges.z * 0.5f, 0.0f, 1.0f );
 		mEdges.w = glm::clamp( edges.w * 0.5f, 0.0f, 1.0f );
 	}
+	//! returns the edge blending shift value for the left, top, right and bottom (values between -1 and 1)
+	virtual const ci::vec4 getShift() const { return mShift; }
+	//! set the edge blending shift value for the left, top, right and bottom (values between -1 and 1)
+	virtual void setShift(float left, float top, float right, float bottom) 
+	{
+		mShift.x = left;
+		mShift.y = top;
+		mShift.z = right;
+		mShift.w = bottom;
+	}
+	//! set the edge blending shift value for the left, top, right and bottom (values between -1 and 1)
+	virtual void setShift(const ci::vec4 &shift)
+	{
+		mShift.x = shift.x;
+		mShift.y = shift.y;
+		mShift.z = shift.z;
+		mShift.w = shift.w;
+	}
 
 	//! reset control points to undistorted image
 	virtual void reset() = 0;
@@ -267,7 +285,7 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	ci::vec3 mGamma;
 	ci::vec4 mEdges;
 	float    mExponent;
-
+	ci::vec4 mShift;
 	//! time of last control point selection
 	double mSelectedTime;
 	//! keep track of mouse position
