@@ -333,7 +333,7 @@ void WarpPerspective::createShader()
 	    "uniform vec3 uGamma;\n"
 	    "uniform vec4  uEdges;\n"
 	    "uniform float uExponent;\n"
-		"uniform vec3 uShift;\n"
+		"uniform vec4 uShift;\n"
 	    ""
 	    "in vec2 vertTexCoord0;\n"
 	    "in vec4 vertColor;\n"
