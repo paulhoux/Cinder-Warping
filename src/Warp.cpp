@@ -180,12 +180,12 @@ XmlTree Warp::toXml() const
 		blend.push_back( luminance );
 
 		XmlTree shift;
-		edges.setTag("shift");
-		edges.setAttribute("left", mShift.x);
-		edges.setAttribute("top", mShift.y);
-		edges.setAttribute("right", mShift.z);
-		edges.setAttribute("bottom", mShift.w);
-		blend.push_back(edges);
+		shift.setTag("shift");
+		shift.setAttribute("left", mShift.x);
+		shift.setAttribute("top", mShift.y);
+		shift.setAttribute("right", mShift.z);
+		shift.setAttribute("bottom", mShift.w);
+		blend.push_back(shift);
 	}
 	xml.push_back( blend );
 
