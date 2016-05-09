@@ -47,6 +47,7 @@ Warp::Warp( WarpType type )
     , mGamma( 1.0f )
     , mEdges( 0.0f )
     , mExponent( 2.0f )
+	, mShift( 0.0f )
     , mSelectedTime( 0 )
 {
 	mWindowSize = vec2( float( mWidth ), float( mHeight ) );
@@ -177,6 +178,14 @@ XmlTree Warp::toXml() const
 		luminance.setAttribute( "green", mLuminance.y );
 		luminance.setAttribute( "blue", mLuminance.z );
 		blend.push_back( luminance );
+
+		XmlTree shift;
+		edges.setTag("shift");
+		edges.setAttribute("left", mShift.x);
+		edges.setAttribute("top", mShift.y);
+		edges.setAttribute("right", mShift.z);
+		edges.setAttribute("bottom", mShift.w);
+		blend.push_back(edges);
 	}
 	xml.push_back( blend );
 
@@ -222,6 +231,14 @@ void Warp::fromXml( const XmlTree &xml )
 			mLuminance.x = luminance->getAttributeValue<float>( "red", mLuminance.x );
 			mLuminance.y = luminance->getAttributeValue<float>( "green", mLuminance.y );
 			mLuminance.z = luminance->getAttributeValue<float>( "blue", mLuminance.z );
+		}
+
+		auto shift = blend->find("shift");
+		if (shift != blend->end()) {
+			mShift.x = shift->getAttributeValue<float>("left", mShift.x);
+			mShift.y = shift->getAttributeValue<float>("top", mShift.y);
+			mShift.z = shift->getAttributeValue<float>("right", mShift.z);
+			mShift.w = shift->getAttributeValue<float>("bottom", mShift.w);
 		}
 	}
 
@@ -274,7 +291,7 @@ void Warp::deselectControlPoint()
 
 unsigned Warp::findControlPoint( const vec2 &pos, float *distance ) const
 {
-	unsigned index;
+	unsigned index = 0;
 
 	// store mouse position for later use in e.g. WarpBilinear::keyDown().
 	mMouse = pos;
@@ -352,6 +369,7 @@ WarpList Warp::readSettings( const DataSourceRef &source )
 
 		// iterate maps
 		for( XmlTree::ConstIter child = profileXml.begin( "map" ); child != profileXml.end(); ++child ) {
+
 			XmlTree warpXml = child->getChild( "warp" );
 
 			// create warp of the correct type
