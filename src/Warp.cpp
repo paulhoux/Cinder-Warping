@@ -621,25 +621,49 @@ void Warp::keyDown( KeyEvent &event )
 		if( isGammaModeEnabled() && mGamma.r > 0.0f )
 			mGamma.r -= 0.05f;
 		break;
-	case KeyEvent::KEY_KP7:
-		// Increase red gamma.
-		if( isGammaModeEnabled() )
-			mGamma.r += 0.05f;
-		break;
 	case KeyEvent::KEY_KP2:
 		// Decrease green gamma.
 		if( isGammaModeEnabled() && mGamma.g > 0.0f )
 			mGamma.g -= 0.05f;
-		break;
-	case KeyEvent::KEY_KP8:
-		// Increase green gamma.
-		if( isGammaModeEnabled() )
-			mGamma.g += 0.05f;
+		else if( event.isAccelDown() && mEdges.w < 1.0f )
+			mEdges.w += 0.01f;
+		else if( !event.isAccelDown() && mEdges.y < 1.0f )
+			mEdges.y += 0.01f;
 		break;
 	case KeyEvent::KEY_KP3:
 		// Decrease blue gamma.
 		if( isGammaModeEnabled() && mGamma.b > 0.0f )
 			mGamma.b -= 0.05f;
+		break;
+	case KeyEvent::KEY_KP4:
+		if( isGammaModeEnabled() )
+			return;
+		else if( event.isAccelDown() && mEdges.z > 0.0f )
+			mEdges.z -= 0.01f;
+		else if( !event.isAccelDown() && mEdges.x > 0.0f )
+			mEdges.x -= 0.01f;
+		break;
+	case KeyEvent::KEY_KP6:
+		if( isGammaModeEnabled() )
+			return;
+		else if( event.isAccelDown() && mEdges.z < 1.0f )
+			mEdges.z += 0.01f;
+		else if( !event.isAccelDown() && mEdges.x < 1.0f )
+			mEdges.x += 0.01f;
+		break;
+	case KeyEvent::KEY_KP7:
+		// Increase red gamma.
+		if( isGammaModeEnabled() )
+			mGamma.r += 0.05f;
+		break;
+	case KeyEvent::KEY_KP8:
+		// Increase green gamma.
+		if( isGammaModeEnabled() )
+			mGamma.g += 0.05f;
+		else if( event.isAccelDown() && mEdges.w > 0.0f )
+			mEdges.w -= 0.01f;
+		else if( !event.isAccelDown() && mEdges.y > 0.0f )
+			mEdges.y -= 0.01f;
 		break;
 	case KeyEvent::KEY_KP9:
 		// Increase blue gamma.
