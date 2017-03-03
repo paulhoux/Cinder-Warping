@@ -69,17 +69,30 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	Warp( WarpType type = UNKNOWN );
 	virtual ~Warp() {}
 
-	//!
+	//! Returns \c TRUE if edit mode is enabled.
 	static bool isEditModeEnabled() { return (bool)sIsEditMode; };
-	//!
+	//! Enables or disables edit mode.
 	static void enableEditMode( bool enabled = true ) { sIsEditMode = enabled; };
-	//!
+	//! Disables edit mode.
 	static void disableEditMode() { sIsEditMode = false; };
-	//!
+	//! Toggles edit mode.
 	static void toggleEditMode()
 	{
 		bool exp = (bool)sIsEditMode;
 		sIsEditMode.compare_exchange_strong( exp, !(bool)sIsEditMode );
+	};
+
+	//! Returns \c TRUE if gamma mode is enabled. If enabled, renders a gamma correction test image instead of the content.
+	static bool isGammaModeEnabled() { return (bool)sIsGammaMode; };
+	//! Enables or disables gamma mode. If enabled, renders a gamma correction test image instead of the content.
+	static void enableGammaMode( bool enabled = true ) { sIsGammaMode = enabled; };
+	//! Disables gamma mode.
+	static void disableGammaMode() { sIsGammaMode = false; };
+	//! Toggles gamma mode. If enabled, renders a gamma correction test image instead of the content.
+	static void toggleGammaMode()
+	{
+		bool exp = (bool)sIsGammaMode;
+		sIsGammaMode.compare_exchange_strong( exp, !(bool)sIsGammaMode );
 	};
 
 	//! Returns the type of the warp.
@@ -293,10 +306,11 @@ class Warp : public std::enable_shared_from_this<Warp> {
 
 	ci::gl::VboRef   mInstanceDataVbo;
 	ci::gl::BatchRef mInstancedBatch;
-    ci::gl::GlslProgRef mShaderGamma;
 
 	//! Edit mode for all warps.
 	static std::atomic<bool> sIsEditMode;
+	//! Gamma mode for all warps.
+	static std::atomic<bool> sIsGammaMode;
 };
 
 // ----------------------------------------------------------------------------------------------------------------

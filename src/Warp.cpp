@@ -33,6 +33,7 @@ namespace ph {
 namespace warping {
 
 std::atomic<bool> Warp::sIsEditMode{ false };
+std::atomic<bool> Warp::sIsGammaMode{ false };
 
 Warp::Warp( WarpType type )
     : mType( type )
@@ -610,6 +611,40 @@ void Warp::keyDown( KeyEvent &event )
 			return;
 		reset();
 		mIsDirty = true;
+		break;
+	case KeyEvent::KEY_KP0:
+		// Toggle gamma mode.
+		Warp::toggleGammaMode();
+		break;
+	case KeyEvent::KEY_KP1:
+		// Decrease red gamma.
+		if( isGammaModeEnabled() && mGamma.r > 0.0f )
+			mGamma.r -= 0.05f;
+		break;
+	case KeyEvent::KEY_KP7:
+		// Increase red gamma.
+		if( isGammaModeEnabled() )
+			mGamma.r += 0.05f;
+		break;
+	case KeyEvent::KEY_KP2:
+		// Decrease green gamma.
+		if( isGammaModeEnabled() && mGamma.g > 0.0f )
+			mGamma.g -= 0.05f;
+		break;
+	case KeyEvent::KEY_KP8:
+		// Increase green gamma.
+		if( isGammaModeEnabled() )
+			mGamma.g += 0.05f;
+		break;
+	case KeyEvent::KEY_KP3:
+		// Decrease blue gamma.
+		if( isGammaModeEnabled() && mGamma.b > 0.0f )
+			mGamma.b -= 0.05f;
+		break;
+	case KeyEvent::KEY_KP9:
+		// Increase blue gamma.
+		if( isGammaModeEnabled() )
+			mGamma.b += 0.05f;
 		break;
 	default:
 		return;
