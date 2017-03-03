@@ -63,12 +63,7 @@ typedef WarpList::const_reverse_iterator WarpConstReverseIter;
 
 class Warp : public std::enable_shared_from_this<Warp> {
   public:
-	typedef enum {
-		UNKNOWN,
-		BILINEAR,
-		PERSPECTIVE,
-		PERSPECTIVE_BILINEAR
-	} WarpType;
+	typedef enum { UNKNOWN, BILINEAR, PERSPECTIVE, PERSPECTIVE_BILINEAR } WarpType;
 
   public:
 	Warp( WarpType type = UNKNOWN );
@@ -184,7 +179,7 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	//! moves the specified control point
 	virtual void moveControlPoint( unsigned index, const ci::vec2 &shift );
 	//! get the number of control points
-	virtual unsigned int getNumControlPoints() const { return mPoints.size(); }
+	virtual size_t getNumControlPoints() const { return mPoints.size(); }
 	//! get the index of the currently selected control point
 	virtual unsigned int getSelectedControlPoint() const { return mSelected; }
 	//! select one of the control points
@@ -397,8 +392,11 @@ class WarpBilinear : public Warp {
 	ci::gl::FboRef      mFbo;
 	ci::gl::Fbo::Format mFboFormat;
 	ci::gl::VboMeshRef  mVboMesh;
-	ci::gl::GlslProgRef mShader;
-	ci::gl::BatchRef    mBatch;
+	ci::gl::GlslProgRef mShader2D;
+	ci::gl::GlslProgRef mShader2DRect;
+	ci::gl::BatchRef    mBatch2D;
+	ci::gl::BatchRef    mBatch2DRect;
+	GLenum              mTarget;
 
 	//! linear or curved interpolation
 	bool mIsLinear;
@@ -469,7 +467,8 @@ class WarpPerspective : public Warp {
 	ci::mat4 mTransform;
 	ci::mat4 mInverted;
 
-	ci::gl::GlslProgRef mShader;
+	ci::gl::GlslProgRef mShader2D;
+	ci::gl::GlslProgRef mShader2DRect;
 };
 
 // ----------------------------------------------------------------------------------------------------------------

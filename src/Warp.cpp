@@ -239,13 +239,15 @@ void Warp::setSize( int w, int h )
 
 vec2 Warp::getControlPoint( unsigned index ) const
 {
-	if( index >= mPoints.size() ) return vec2( 0 );
+	if( index >= mPoints.size() )
+		return vec2( 0 );
 	return mPoints[index];
 }
 
 void Warp::setControlPoint( unsigned index, const vec2 &pos )
 {
-	if( index >= mPoints.size() ) return;
+	if( index >= mPoints.size() )
+		return;
 	mPoints[index] = pos;
 
 	mIsDirty = true;
@@ -253,7 +255,8 @@ void Warp::setControlPoint( unsigned index, const vec2 &pos )
 
 void Warp::moveControlPoint( unsigned index, const vec2 &shift )
 {
-	if( index >= mPoints.size() ) return;
+	if( index >= mPoints.size() )
+		return;
 	mPoints[index] += shift;
 
 	mIsDirty = true;
@@ -261,7 +264,8 @@ void Warp::moveControlPoint( unsigned index, const vec2 &shift )
 
 void Warp::selectControlPoint( unsigned index )
 {
-	if( index >= mPoints.size() || index == mSelected ) return;
+	if( index >= mPoints.size() || index == mSelected )
+		return;
 
 	mSelected = index;
 	mSelectedTime = app::getElapsedSeconds();
@@ -343,7 +347,8 @@ WarpList Warp::readSettings( const DataSourceRef &source )
 
 	// check if this is a valid file
 	bool isWarp = doc.hasChild( "warpconfig" );
-	if( !isWarp ) return warps;
+	if( !isWarp )
+		return warps;
 
 	//
 	if( isWarp ) {
@@ -491,8 +496,10 @@ void Warp::mouseMove( cinder::app::MouseEvent &event )
 
 void Warp::mouseDown( cinder::app::MouseEvent &event )
 {
-	if( !sIsEditMode ) return;
-	if( mSelected >= mPoints.size() ) return;
+	if( !sIsEditMode )
+		return;
+	if( mSelected >= mPoints.size() )
+		return;
 
 	// calculate offset by converting control point from normalized to standard screen space
 	ivec2 p = ( getControlPoint( mSelected ) * mWindowSize );
@@ -503,8 +510,10 @@ void Warp::mouseDown( cinder::app::MouseEvent &event )
 
 void Warp::mouseDrag( cinder::app::MouseEvent &event )
 {
-	if( !sIsEditMode ) return;
-	if( mSelected >= mPoints.size() ) return;
+	if( !sIsEditMode )
+		return;
+	if( mSelected >= mPoints.size() )
+		return;
 
 	vec2 m( event.getPos() );
 	vec2 p( m.x - mOffset.x, m.y - mOffset.y );
@@ -536,7 +545,8 @@ void Warp::keyDown( KeyEvent &event )
 		return;
 
 	// do not listen to key input if not selected
-	if( mSelected >= mPoints.size() ) return;
+	if( mSelected >= mPoints.size() )
+		return;
 
 	switch( event.getCode() ) {
 	case KeyEvent::KEY_TAB:
@@ -550,46 +560,54 @@ void Warp::keyDown( KeyEvent &event )
 		}
 		else {
 			++mSelected;
-			if( mSelected >= mPoints.size() ) mSelected = 0;
+			if( mSelected >= mPoints.size() )
+				mSelected = 0;
 			selectControlPoint( mSelected );
 		}
 		break;
 	case KeyEvent::KEY_UP: {
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		float step = event.isShiftDown() ? 10.0f : 0.5f;
 		mPoints[mSelected].y -= step / mWindowSize.y;
 		mIsDirty = true;
 	} break;
 	case KeyEvent::KEY_DOWN: {
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		float step = event.isShiftDown() ? 10.0f : 0.5f;
 		mPoints[mSelected].y += step / mWindowSize.y;
 		mIsDirty = true;
 	} break;
 	case KeyEvent::KEY_LEFT: {
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		float step = event.isShiftDown() ? 10.0f : 0.5f;
 		mPoints[mSelected].x -= step / mWindowSize.x;
 		mIsDirty = true;
 	} break;
 	case KeyEvent::KEY_RIGHT: {
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		float step = event.isShiftDown() ? 10.0f : 0.5f;
 		mPoints[mSelected].x += step / mWindowSize.x;
 		mIsDirty = true;
 	} break;
 	case KeyEvent::KEY_MINUS:
 	case KeyEvent::KEY_KP_MINUS:
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		mBrightness = math<float>::max( 0.0f, mBrightness - 0.01f );
 		break;
 	case KeyEvent::KEY_PLUS:
 	case KeyEvent::KEY_KP_PLUS:
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		mBrightness = math<float>::min( 1.0f, mBrightness + 0.01f );
 		break;
 	case KeyEvent::KEY_r:
-		if( mSelected >= mPoints.size() ) return;
+		if( mSelected >= mPoints.size() )
+			return;
 		reset();
 		mIsDirty = true;
 		break;
@@ -651,45 +669,47 @@ void Warp::drawControlPoints()
 
 		mesh->appendVbo( instanceDataLayout, mInstanceDataVbo );
 
+		auto fmt = gl::GlslProg::Format();
+		fmt.vertex(
+		    "#version 150\n"
+		    ""
+		    "uniform mat4 ciViewProjection;\n"
+		    ""
+		    "in vec4 ciPosition;\n"
+		    "in vec2 ciTexCoord0;\n"
+		    "in vec4 ciColor;\n"
+		    ""
+		    "in vec4 iPositionScale;\n"
+		    "in vec4 iColor;\n"
+		    ""
+		    "out vec2 vertTexCoord0;\n"
+		    "out vec4 vertColor;\n"
+		    ""
+		    "void main(void) {\n"
+		    "	vertTexCoord0 = ciTexCoord0;\n"
+		    "	vertColor = ciColor * iColor;\n"
+		    "	gl_Position = ciViewProjection * vec4( ciPosition.xy * iPositionScale.z + iPositionScale.xy, ciPosition.zw );\n"
+		    "}" );
+
+		fmt.fragment(
+		    "#version 150\n"
+		    ""
+		    "in  vec2 vertTexCoord0;\n"
+		    "in  vec4 vertColor;\n"
+		    ""
+		    "out vec4 fragColor;\n"
+		    ""
+		    "void main(void) {\n"
+		    "	vec2 uv = vertTexCoord0 * 2.0 - 1.0;\n"
+		    "	float d = dot( uv, uv );\n"
+		    "	float rim = smoothstep( 0.7, 0.8, d );\n"
+		    "	rim += smoothstep( 0.3, 0.4, d ) - smoothstep( 0.5, 0.6, d );\n"
+		    "	rim += smoothstep( 0.1, 0.0, d );\n"
+		    "	fragColor = mix( vec4( 0.0, 0.0, 0.0, 0.25 ), vertColor, rim );\n"
+		    "}" );
+
 		try {
-			auto glsl = gl::GlslProg::create(
-			    gl::GlslProg::Format()
-			        .vertex(
-			            "#version 150\n"
-			            ""
-			            "uniform mat4 ciViewProjection;\n"
-			            ""
-			            "in vec4 ciPosition;\n"
-			            "in vec2 ciTexCoord0;\n"
-			            "in vec4 ciColor;\n"
-			            ""
-			            "in vec4 iPositionScale;\n"
-			            "in vec4 iColor;\n"
-			            ""
-			            "out vec2 vertTexCoord0;\n"
-			            "out vec4 vertColor;\n"
-			            ""
-			            "void main(void) {\n"
-			            "	vertTexCoord0 = ciTexCoord0;\n"
-			            "	vertColor = ciColor * iColor;\n"
-			            "	gl_Position = ciViewProjection * vec4( ciPosition.xy * iPositionScale.z + iPositionScale.xy, ciPosition.zw );\n"
-			            "}" )
-			        .fragment(
-			            "#version 150\n"
-			            ""
-			            "in  vec2 vertTexCoord0;\n"
-			            "in  vec4 vertColor;\n"
-			            ""
-			            "out vec4 fragColor;\n"
-			            ""
-			            "void main(void) {\n"
-			            "	vec2 uv = vertTexCoord0 * 2.0 - 1.0;\n"
-			            "	float d = dot( uv, uv );\n"
-			            "	float rim = smoothstep( 0.7, 0.8, d );\n"
-			            "	rim += smoothstep( 0.3, 0.4, d ) - smoothstep( 0.5, 0.6, d );\n"
-			            "	rim += smoothstep( 0.1, 0.0, d );\n"
-			            "	fragColor = mix( vec4( 0.0, 0.0, 0.0, 0.25 ), vertColor, rim );\n"
-			            "}" ) );
+			auto glsl = gl::GlslProg::create( fmt );
 
 			mInstancedBatch = gl::Batch::create( mesh, glsl, { { geom::Attrib::CUSTOM_0, "iPositionScale" }, { geom::Attrib::CUSTOM_1, "iColor" } } );
 		}
@@ -705,10 +725,6 @@ void Warp::drawControlPoints()
 		for( size_t i = 0; i < mControlPoints.size(); ++i )
 			*ptr++ = mControlPoints[i];
 		mInstanceDataVbo->unmap();
-
-		// render to window
-		//gl::ScopedMatrices matrices;
-		//gl::setMatricesWindow( getWindowSize() );
 
 		// draw instanced
 		mInstancedBatch->drawInstanced( (GLsizei)mControlPoints.size() );
