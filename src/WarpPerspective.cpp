@@ -117,13 +117,15 @@ void WarpPerspective::draw( const gl::Texture2dRef &texture, const Area &srcArea
 	auto &shader = texture->getTarget() == GL_TEXTURE_RECTANGLE ? mShader2DRect : mShader2D;
 
 	// draw texture
+	auto coords = texture->getAreaTexCoords( srcArea );
+
 	gl::pushModelMatrix();
 	gl::multModelMatrix( getTransform() );
 
 	gl::ScopedTextureBind scpTex0( texture );
 	gl::ScopedGlslProg    scpGlsl( shader );
 	shader->uniform( "uTex0", 0 );
-	shader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
+	shader->uniform( "uCoords", vec4( coords.x1, coords.y1, coords.x2 - coords.x1, coords.y2 - coords.y1 ) );
 	shader->uniform( "uLuminance", mLuminance );
 	shader->uniform( "uGamma", mGamma );
 	shader->uniform( "uEdges", mEdges );
@@ -131,8 +133,7 @@ void WarpPerspective::draw( const gl::Texture2dRef &texture, const Area &srcArea
 	shader->uniform( "uEditMode", (bool)isEditModeEnabled() );
 	shader->uniform( "uGammaMode", (bool)isEditModeEnabled() && (bool)isGammaModeEnabled() && mSelected < mPoints.size() );
 
-	auto coords = texture->getAreaTexCoords( srcArea );
-	gl::drawSolidRect( rect, coords.getUpperLeft(), coords.getLowerRight() );
+	gl::drawSolidRect( rect, vec2( 0 ), vec2( 1 ) );
 
 	gl::popModelMatrix();
 
@@ -323,16 +324,20 @@ void WarpPerspective::createShader()
 	    ""
 	    "uniform mat4 ciModelViewProjection;\n"
 	    ""
+	    "uniform vec4 uCoords;\n"
+	    ""
 	    "in vec4 ciPosition;\n"
 	    "in vec2 ciTexCoord0;\n"
 	    "in vec4 ciColor;\n"
 	    ""
 	    "out vec2 vertTexCoord0;\n"
+	    "out vec2 vertTexCoord1;\n"
 	    "out vec4 vertColor;\n"
 	    ""
 	    "void main( void ) {\n"
 	    "	vertColor = ciColor;\n"
 	    "	vertTexCoord0 = ciTexCoord0;\n"
+	    "	vertTexCoord1 = ciTexCoord0 * uCoords.zw + uCoords.xy;\n"
 	    ""
 	    "	gl_Position = ciModelViewProjection * ciPosition;\n"
 	    "}" );
@@ -340,16 +345,16 @@ void WarpPerspective::createShader()
 	fmt.fragment(
 	    "#version 150\n"
 	    ""
-	    "uniform sampler2DRect uTex0;\n" // This is the only difference.
-	    "uniform vec4 uExtends;\n"
-	    "uniform vec3 uLuminance;\n"
-	    "uniform vec3 uGamma;\n"
-	    "uniform vec4  uEdges;\n"
-	    "uniform float uExponent;\n"
-	    "uniform bool  uEditMode;\n"
-	    "uniform bool  uGammaMode;\n"
+	    "uniform sampler2DRect uTex0;\n"
+	    "uniform vec3          uGamma;\n"
+	    "uniform float         uExponent;\n"
+	    "uniform vec4          uEdges;\n"
+	    "uniform vec3          uLuminance;\n"
+	    "uniform bool          uEditMode;\n"
+	    "uniform bool          uGammaMode;\n"
 	    ""
 	    "in vec2 vertTexCoord0;\n"
+	    "in vec2 vertTexCoord1;\n"
 	    "in vec4 vertColor;\n"
 	    ""
 	    "out vec4 fragColor;\n"
@@ -368,14 +373,14 @@ void WarpPerspective::createShader()
 	    "       fragColor.rgb = pow( mix( 0.5 * clr, r * clr, b ), one / uGamma );\n"
 	    "   }\n"
 	    "   else {\n"
-	    "       fragColor.rgb = texture( uTex0, vertTexCoord0 ).rgb;\n"
+	    "       fragColor.rgb = texture( uTex0, vertTexCoord1 ).rgb;\n"
 	    ""
 	    // Edge blending.
 	    "       float a = 1.0;\n"
-	    "       if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / ( uEdges.x * uExtends.x ), 0.0, 1.0 );\n"
-	    "       if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / ( uEdges.y * uExtends.y ), 0.0, 1.0 );\n"
-	    "       if( uEdges.z < 1.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x / uExtends.x ) / ( 1.0 - uEdges.z ), 0.0, 1.0 );\n"
-	    "       if( uEdges.w < 1.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y / uExtends.y ) / ( 1.0 - uEdges.w ), 0.0, 1.0 );\n"
+	    "       if( uEdges.x > 0.0 ) a *= clamp( vertTexCoord0.x / ( uEdges.x ), 0.0, 1.0 );\n"
+	    "       if( uEdges.y > 0.0 ) a *= clamp( vertTexCoord0.y / ( uEdges.y ), 0.0, 1.0 );\n"
+	    "       if( uEdges.z < 1.0 ) a *= clamp( ( 1.0 - vertTexCoord0.x ) / ( 1.0 - uEdges.z ), 0.0, 1.0 );\n"
+	    "       if( uEdges.w < 1.0 ) a *= clamp( ( 1.0 - vertTexCoord0.y ) / ( 1.0 - uEdges.w ), 0.0, 1.0 );\n"
 	    ""
 	    "       const vec3 one = vec3( 1.0 );\n"
 	    "       vec3 blend = ( a < 0.5 ) ? ( uLuminance * pow( 2.0 * a, uExponent ) ) : one - ( one - uLuminance ) * pow( 2.0 * ( 1.0 - a ), uExponent );\n"
@@ -386,11 +391,11 @@ void WarpPerspective::createShader()
 	    // Draw edge blending limits.
 	    "	if( uEditMode ) {\n"
 	    "       const vec4 kEdgeColor = vec4( 0, 1, 1, 1 );\n"
-	    "       vec4 edges = abs( vertTexCoord0.xyxy / uExtends.xyxy - uEdges );\n"
-	    "       float e = step( edges.x, 1.0 / uExtends.x );\n"
-	    "       e += step( edges.y, 1.0 / uExtends.y );\n"
-	    "       e += step( edges.z, 1.0 / uExtends.x );\n"
-	    "       e += step( edges.w, 1.0 / uExtends.y );\n"
+	    "       vec4 edges = abs( vertTexCoord0.xyxy - uEdges );\n"
+	    "       float e = step( edges.x, 1.0 );\n"
+	    "       e += step( edges.y, 1.0 );\n"
+	    "       e += step( edges.z, 1.0 );\n"
+	    "       e += step( edges.w, 1.0 );\n"
 	    "       fragColor = mix( fragColor, kEdgeColor, e );\n"
 	    "   }\n"
 	    "}" );
@@ -405,8 +410,7 @@ void WarpPerspective::createShader()
 	fmt.fragment(
 	    "#version 150\n"
 	    ""
-	    "uniform sampler2D uTex0;\n" // This is the only difference.
-	    "uniform vec4 uExtends;\n"
+	    "uniform sampler2D uTex0;\n"
 	    "uniform vec3 uLuminance;\n"
 	    "uniform vec3 uGamma;\n"
 	    "uniform vec4  uEdges;\n"
@@ -415,6 +419,7 @@ void WarpPerspective::createShader()
 	    "uniform bool  uGammaMode;\n"
 	    ""
 	    "in vec2 vertTexCoord0;\n"
+	    "in vec2 vertTexCoord1;\n"
 	    "in vec4 vertColor;\n"
 	    ""
 	    "out vec4 fragColor;\n"
@@ -433,7 +438,7 @@ void WarpPerspective::createShader()
 	    "       fragColor.rgb = pow( mix( 0.5 * clr, r * clr, b ), one / uGamma );\n"
 	    "   }\n"
 	    "   else {\n"
-	    "	    fragColor.rgb = texture( uTex0, vertTexCoord0 ).rgb;\n"
+	    "	    fragColor.rgb = texture( uTex0, vertTexCoord1 ).rgb;\n"
 	    ""
 	    // Edge blending.
 	    "       float a = 1.0;\n"
@@ -452,10 +457,10 @@ void WarpPerspective::createShader()
 	    "	if( uEditMode ) {\n"
 	    "       const vec4 kEdgeColor = vec4( 0, 1, 1, 1 );\n"
 	    "       vec4 edges = abs( vertTexCoord0.xyxy - uEdges );\n"
-	    "       float e = step( edges.x, 1.0 / uExtends.x );\n"
-	    "       e += step( edges.y, 1.0 / uExtends.y );\n"
-	    "       e += step( edges.z, 1.0 / uExtends.x );\n"
-	    "       e += step( edges.w, 1.0 / uExtends.y );\n"
+	    "       float e = step( edges.x, 1.0 );\n"
+	    "       e += step( edges.y, 1.0 );\n"
+	    "       e += step( edges.z, 1.0 );\n"
+	    "       e += step( edges.w, 1.0 );\n"
 	    "       fragColor = mix( fragColor, kEdgeColor, e );\n"
 	    "   }\n"
 	    "}" );
