@@ -767,10 +767,11 @@ void WarpBilinear::createShader()
 	    // Draw edge blending limits.
 	    "       const vec4 kEdgeColor = vec4( 0, 1, 1, 1 );\n"
 	    "       vec4 edges = abs( vertTexCoord0.xyxy - uEdges );\n"
-	    "       float e = step( edges.x, 1.0 );\n"
-	    "       e += step( edges.y, 1.0 );\n"
-	    "       e += step( edges.z, 1.0 );\n"
-	    "       e += step( edges.w, 1.0 );\n"
+        "       vec4 w = 0.5 * fwidth( edges );\n"
+	    "       float e = step( edges.x, w.x );\n"
+	    "       e += step( edges.y, w.y );\n"
+	    "       e += step( edges.z, w.z );\n"
+	    "       e += step( edges.w, w.w );\n"
 	    "       fragColor.rgb = mix( fragColor.rgb, kEdgeColor.rgb, e );\n"
 	    "	}\n"
 	    "}" );
@@ -844,10 +845,11 @@ void WarpBilinear::createShader()
 	    // Draw edge blending limits.
 	    "       const vec4 kEdgeColor = vec4( 0, 1, 1, 1 );\n"
 	    "       vec4 edges = abs( vertTexCoord0.xyxy - uEdges );\n"
-	    "       float e = step( edges.x, 1.0 );\n"
-	    "       e += step( edges.y, 1.0 );\n"
-	    "       e += step( edges.z, 1.0 );\n"
-	    "       e += step( edges.w, 1.0 );\n"
+        "       vec4 w = 0.5 * fwidth( edges );\n"
+	    "       float e = step( edges.x, w.x );\n"
+	    "       e += step( edges.y, w.y );\n"
+	    "       e += step( edges.z, w.z );\n"
+	    "       e += step( edges.w, w.w );\n"
 	    "       fragColor = mix( fragColor, kEdgeColor, e );\n"
 	    "	}\n"
 	    "}" );
