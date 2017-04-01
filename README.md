@@ -13,7 +13,7 @@ Image warping, as used in this block, is the process of manipulating an image so
 * **Perspective-bilinear warp**: a combination of both techniques, where you first drag the four corners of your content to the desired location on the wall, then adjust for curvatures using the additional control points. If you (accidentally) move your projector later, all you need to do is adjust the four corners and the projection should perfectly fit on the curved wall again.
 
 
-#####Adding this block to Cinder
+##### Adding this block to Cinder
 This block is meant to be used with version 0.9.0 (or higher) of Cinder.
 
 To add this block to your copy of Cinder, so it will be detected automatically by TinderBox:
@@ -25,7 +25,7 @@ To add this block to your copy of Cinder, so it will be detected automatically b
 Alternatively, you can download the repository as a [ZIP-file](https://github.com/paulhoux/Cinder-Warping/zipball/master) and manually add the files to a "cinder_master\blocks\Cinder-Warping" folder.
 
 
-#####Creating a sample application using Tinderbox
+##### Creating a sample application using Tinderbox
 The provided sample will show you how to create warps, read them from and write them to a settings file, toggle the editor and handle mouse and key events. To create and compile the sample:
 * Run Cinder's TinderBox
 * Select "Warping: Basic" from the Template popup menu
@@ -37,7 +37,7 @@ The provided sample will show you how to create warps, read them from and write 
 * Press "Finish"
 
 
-#####Controls
+##### Controls
 The block provides a built-in editor to adjust your warps. When activated using the ```Warp::enableEditMode(true)``` function, these are the keys you can use:
 * Use mouse or cursor keys to move the currently selected control point
 * Press - or + to change brightness
@@ -57,14 +57,14 @@ The block provides a built-in editor to adjust your warps. When activated using 
 * Press F12 to flip content vertically (unavailable for non-Perspective warps)
 
 
-#####To-Do's
+##### To-Do's
 * Support for call-backs or lambda's when iterating over all warps
 * Out-of-the-box support for multiple windows
 * Support for other warp types, e.g. WarpSpherical
 
 
-#####Copyright notice
-Copyright (c) 2010-2015, Paul Houx - All rights reserved.
+##### Copyright notice
+Copyright (c) 2010-2017, Paul Houx - All rights reserved.
 This code is intended for use with the Cinder C++ library: http://libcinder.org
 
 Cinder-Warping is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
