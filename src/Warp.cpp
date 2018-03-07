@@ -46,7 +46,7 @@ Warp::Warp( WarpType type )
     , mControlsY( 2 )
     , mLuminance( 0.5f )
     , mGamma( 1.0f )
-    , mEdges( 0.0f )
+    , mEdges( 0.0f, 0.0f, 1.0f, 1.0f )
     , mExponent( 2.0f )
     , mSelectedTime( 0 )
 {
