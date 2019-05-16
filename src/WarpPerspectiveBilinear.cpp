@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2015, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2019, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -24,19 +24,19 @@
 #include "cinder/app/App.h"
 
 using namespace ci;
-using namespace ci::app;
+using namespace app;
 
 namespace ph {
 namespace warping {
 
-WarpPerspectiveBilinear::WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format )
-    : WarpBilinear( format )
+WarpPerspectiveBilinear::WarpPerspectiveBilinear( const gl::Fbo::Format &format )
+	: WarpBilinear( format )
 {
 	// change type
 	mType = PERSPECTIVE_BILINEAR;
 
 	// create perspective warp
-	mWarp = WarpPerspectiveRef( new WarpPerspective() );
+	mWarp = std::make_shared<WarpPerspective>();
 }
 
 XmlTree WarpPerspectiveBilinear::toXml() const
@@ -65,8 +65,8 @@ void WarpPerspectiveBilinear::fromXml( const XmlTree &xml )
 	// get corners
 	unsigned i = 0;
 	for( XmlTree::ConstIter child = xml.begin( "corner" ); child != xml.end(); ++child ) {
-		float x = child->getAttributeValue<float>( "x", 0.0f );
-		float y = child->getAttributeValue<float>( "y", 0.0f );
+		const float x = child->getAttributeValue<float>( "x", 0.0f );
+		const float y = child->getAttributeValue<float>( "y", 0.0f );
 
 		mWarp->setControlPoint( i, vec2( x, y ) );
 
@@ -182,7 +182,7 @@ void WarpPerspectiveBilinear::resize()
 	WarpBilinear::resize();
 }
 
-void WarpPerspectiveBilinear::setSize( int w, int h )
+void WarpPerspectiveBilinear::setSize( float w, float h )
 {
 	// make content size compatible with WarpBilinear's mWindowSize
 	mWarp->setSize( mWindowSize );
@@ -199,8 +199,8 @@ vec2 WarpPerspectiveBilinear::getControlPoint( unsigned index ) const
 	}
 	else {
 		// bilinear: transform control point from warped space to normalized screen space
-		vec2 p = Warp::getControlPoint( index ) * vec2( mWarp->getSize() );
-		vec4 pt = mWarp->getTransform() * vec4( p.x, p.y, 0, 1 );
+		const vec2 p = Warp::getControlPoint( index ) * vec2( mWarp->getSize() );
+		vec4       pt = mWarp->getTransform() * vec4( p.x, p.y, 0, 1 );
 
 		if( pt.w != 0 )
 			pt.w = 1 / pt.w;
@@ -219,14 +219,14 @@ void WarpPerspectiveBilinear::setControlPoint( unsigned index, const vec2 &pos )
 	}
 	else {
 		// bilinear:: transform control point from normalized screen space to warped space
-		vec2 p = pos * mWindowSize;
-		vec4 pt = mWarp->getInvertedTransform() * vec4( p.x, p.y, 0, 1 );
+		const vec2 p = pos * mWindowSize;
+		vec4       pt = mWarp->getInvertedTransform() * vec4( p.x, p.y, 0, 1 );
 
 		if( pt.w != 0 )
 			pt.w = 1 / pt.w;
 		pt *= pt.w;
 
-		vec2 size( mWarp->getSize() );
+		const vec2 size( mWarp->getSize() );
 		Warp::setControlPoint( index, vec2( pt.x, pt.y ) / size );
 	}
 }
@@ -240,7 +240,7 @@ void WarpPerspectiveBilinear::moveControlPoint( unsigned index, const vec2 &shif
 	}
 	else {
 		// bilinear: transform control point from normalized screen space to warped space
-		vec2 pt = getControlPoint( index );
+		const vec2 pt = getControlPoint( index );
 		setControlPoint( index, pt + shift );
 	}
 }
@@ -267,14 +267,14 @@ void WarpPerspectiveBilinear::deselectControlPoint()
 
 bool WarpPerspectiveBilinear::isCorner( unsigned index ) const
 {
-	unsigned numControls = (unsigned)( mControlsX * mControlsY );
+	const auto numControls = unsigned( mControlsX * mControlsY );
 
 	return ( index == 0 || index == ( numControls - mControlsY ) || index == ( numControls - 1 ) || index == ( mControlsY - 1 ) );
 }
 
 unsigned WarpPerspectiveBilinear::convertIndex( unsigned index ) const
 {
-	unsigned numControls = (unsigned)( mControlsX * mControlsY );
+	const auto numControls = unsigned( mControlsX * mControlsY );
 
 	if( index == 0 )
 		return 0;
@@ -287,5 +287,5 @@ unsigned WarpPerspectiveBilinear::convertIndex( unsigned index ) const
 	else
 		return index;
 }
-}
-} // namespace ph::warping
+} // namespace warping
+} // namespace ph

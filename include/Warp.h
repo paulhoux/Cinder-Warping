@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2015, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2019, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -41,13 +41,13 @@ class XmlTree;
 namespace app {
 class KeyEvent;
 class MouseEvent;
-}
+} // namespace app
 
 namespace gl {
 class Texture2d;
 typedef std::shared_ptr<Texture2d> Texture2dRef;
-}
-}
+} // namespace gl
+} // namespace cinder
 
 //
 
@@ -105,21 +105,21 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	virtual void fromXml( const ci::XmlTree &xml );
 
 	//! Get the width of the content in pixels.
-	int getWidth() const { return mWidth; };
+	float getWidth() const { return mWidth; };
 	//! Get the height of the content in pixels.
-	int getHeight() const { return mHeight; };
+	float getHeight() const { return mHeight; };
 	//! Get the width and height of the content in pixels.
-	ci::ivec2 getSize() const { return ci::ivec2( mWidth, mHeight ); };
+	ci::vec2 getSize() const { return ci::vec2( mWidth, mHeight ); };
 	//! Get the width and height of the content in pixels.
-	ci::Area getBounds() const { return ci::Area( 0, 0, mWidth, mHeight ); };
+	ci::Rectf getBounds() const { return ci::Rectf( 0, 0, mWidth, mHeight ); };
 	//! Set the width of the content in pixels.
-	virtual void setWidth( int w ) { setSize( w, mHeight ); }
+	virtual void setWidth( float w ) { setSize( w, mHeight ); }
 	//! Set the height of the content in pixels.
-	virtual void setHeight( int h ) { setSize( mWidth, h ); }
+	virtual void setHeight( float h ) { setSize( mWidth, h ); }
 	//! Set the width and height of the content in pixels.
-	virtual void setSize( const ci::ivec2 &size ) { setSize( size.x, size.y ); }
+	virtual void setSize( const ci::vec2 &size ) { setSize( size.x, size.y ); }
 	//! Set the width and height of the content in pixels.
-	virtual void setSize( int w, int h );
+	virtual void setSize( float w, float h );
 
 	//! Returns the luminance value for the red, green and blue channels, used for edge blending (0.5 = linear).
 	virtual const ci::vec3 &getLuminance() const { return mLuminance; }
@@ -203,9 +203,9 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	virtual unsigned findControlPoint( const ci::vec2 &pos, float *distance ) const;
 
 	//! Set the width and height in pixels of the content of all warps.
-	static void setSize( const WarpList &warps, int w, int h );
+	static void setSize( const WarpList &warps, float w, float h );
 	//! Set the width and height in pixels of the content of all warps.
-	static void setSize( const WarpList &warps, const ci::ivec2 &size ) { setSize( warps, size.x, size.y ); }
+	static void setSize( const WarpList &warps, const ci::vec2 &size ) { setSize( warps, size.x, size.y ); }
 	//! Checks all warps and selects the closest control point.
 	static void selectClosestControlPoint( const WarpList &warps, const ci::ivec2 &position );
 
@@ -258,8 +258,8 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	WarpType mType;
 
 	bool     mIsDirty;
-	int      mWidth;
-	int      mHeight;
+	float    mWidth;
+	float    mHeight;
 	ci::vec2 mWindowSize;
 	float    mBrightness;
 	unsigned mSelected;
@@ -295,9 +295,9 @@ class Warp : public std::enable_shared_from_this<Warp> {
 
 		Data() {}
 		Data( const ci::vec2 &pt, const ci::vec4 &clr, float scale )
-		    : position( pt )
-		    , scale( scale )
-		    , color( clr )
+			: position( pt )
+			, scale( scale )
+			, color( clr )
 		{
 		}
 	} Data;
@@ -332,7 +332,7 @@ class WarpBilinear : public Warp {
 	virtual void fromXml( const ci::XmlTree &xml ) override;
 
 	//! Set the width and height of the content in pixels.
-	void setSize( int w, int h ) override
+	void setSize( float w, float h ) override
 	{
 		Warp::setSize( w, h );
 		mFbo.reset();
@@ -388,10 +388,11 @@ class WarpBilinear : public Warp {
 	void updateMesh();
 	//!	Returns the specified control point. Values for col and row are clamped to prevent errors.
 	ci::vec2 getPoint( int col, int row ) const;
-	//! Performs fast Catmull-Rom interpolation, returns the interpolated value at t.
-	ci::vec2 cubicInterpolate( const std::vector<ci::vec2> &knots, float t ) const;
 	//!
 	ci::Rectf getMeshBounds() const;
+
+	//! Performs fast Catmull-Rom interpolation, returns the interpolated value at t.
+	static ci::vec2 cubicInterpolate( const std::vector<ci::vec2> &knots, float t );
 
   private:
 	//! Greatest common divisor using Euclidian algorithm (from: http://en.wikipedia.org/wiki/Greatest_common_divisor)
@@ -513,7 +514,7 @@ class WarpPerspectiveBilinear : public WarpBilinear {
 	void resize() override;
 
 	//! Set the width and height of the content in pixels.
-	void setSize( int w, int h ) override;
+	void setSize( float w, float h ) override;
 
 	//! Returns the coordinates of the specified control point.
 	ci::vec2 getControlPoint( unsigned index ) const override;
@@ -538,5 +539,5 @@ class WarpPerspectiveBilinear : public WarpBilinear {
   protected:
 	WarpPerspectiveRef mWarp;
 };
-}
-} // namespace ph::warping
+} // namespace warping
+} // namespace ph
