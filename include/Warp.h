@@ -512,6 +512,7 @@ class WarpPerspectiveBilinear : public WarpBilinear {
 	void keyDown( ci::app::KeyEvent &event ) override;
 
 	void resize() override;
+	void resize( const ci::ivec2 &size ) override;
 
 	//! Set the width and height of the content in pixels.
 	void setSize( float w, float h ) override;
