@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2019, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2020, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -20,15 +20,13 @@
 
 #pragma once
 
-#include "cinder/Area.h"
-#include "cinder/Color.h"
-#include "cinder/DataSource.h"
-#include "cinder/DataTarget.h"
-#include "cinder/Matrix.h"
-#include "cinder/Rect.h"
-#include "cinder/Vector.h"
-
-#include "cinder/gl/gl.h"
+#include <cinder/Area.h>
+#include <cinder/Color.h>
+#include <cinder/DataSource.h>
+#include <cinder/Matrix.h>
+#include <cinder/Rect.h>
+#include <cinder/Vector.h>
+#include <cinder/gl/gl.h>
 
 #include <atomic>
 #include <vector>
@@ -51,8 +49,7 @@ typedef std::shared_ptr<Texture2d> Texture2dRef;
 
 //
 
-namespace ph {
-namespace warping {
+namespace ph::warping {
 
 typedef std::shared_ptr<class Warp>      WarpRef;
 typedef std::vector<WarpRef>             WarpList;
@@ -63,14 +60,19 @@ typedef WarpList::const_reverse_iterator WarpConstReverseIter;
 
 class Warp : public std::enable_shared_from_this<Warp> {
   public:
-	typedef enum { UNKNOWN, BILINEAR, PERSPECTIVE, PERSPECTIVE_BILINEAR } WarpType;
+	enum class WarpType { UNKNOWN, BILINEAR, PERSPECTIVE, PERSPECTIVE_BILINEAR };
 
-  public:
-	Warp( WarpType type = UNKNOWN );
-	virtual ~Warp() {}
+	explicit Warp( WarpType type = WarpType::UNKNOWN );
+	virtual ~Warp() = default;
+
+	Warp( const Warp & ) = delete;
+	Warp( Warp && ) = delete;
+
+	Warp &operator=( const Warp & ) = delete;
+	Warp &operator=( Warp && ) = delete;
 
 	//! Returns \c TRUE if edit mode is enabled.
-	static bool isEditModeEnabled() { return (bool)sIsEditMode; };
+	static bool isEditModeEnabled() { return bool( sIsEditMode ); };
 	//! Enables or disables edit mode.
 	static void enableEditMode( bool enabled = true ) { sIsEditMode = enabled; };
 	//! Disables edit mode.
@@ -78,12 +80,12 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	//! Toggles edit mode.
 	static void toggleEditMode()
 	{
-		bool exp = (bool)sIsEditMode;
-		sIsEditMode.compare_exchange_strong( exp, !(bool)sIsEditMode );
+		bool exp = bool( sIsEditMode );
+		sIsEditMode.compare_exchange_strong( exp, !bool( sIsEditMode ) );
 	};
 
 	//! Returns \c TRUE if gamma mode is enabled. If enabled, renders a gamma correction test image instead of the content.
-	static bool isGammaModeEnabled() { return (bool)sIsGammaMode; };
+	static bool isGammaModeEnabled() { return bool( sIsGammaMode ); };
 	//! Enables or disables gamma mode. If enabled, renders a gamma correction test image instead of the content.
 	static void enableGammaMode( bool enabled = true ) { sIsGammaMode = enabled; };
 	//! Disables gamma mode.
@@ -91,8 +93,8 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	//! Toggles gamma mode. If enabled, renders a gamma correction test image instead of the content.
 	static void toggleGammaMode()
 	{
-		bool exp = (bool)sIsGammaMode;
-		sIsGammaMode.compare_exchange_strong( exp, !(bool)sIsGammaMode );
+		bool exp = bool( sIsGammaMode );
+		sIsGammaMode.compare_exchange_strong( exp, !bool( sIsGammaMode ) );
 	};
 
 	//! Returns the type of the warp.
@@ -265,8 +267,8 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	unsigned mSelected;
 
 	//! Determines the number of horizontal and vertical control points.
-	int mControlsX;
-	int mControlsY;
+	size_t mControlsX;
+	size_t mControlsY;
 
 	std::vector<ci::vec2> mPoints;
 
@@ -284,28 +286,27 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	static const int MAX_NUM_CONTROL_POINTS = 1024;
 
   private:
-	ci::vec2 mOffset;
-
 	//! Instanced control points.
 	typedef struct Data {
-		ci::vec2 position;
-		float    scale;
-		float    reserved;
-		ci::vec4 color;
+		ci::vec2 position{ 0 };
+		float    scale{ 1 };
+		float    reserved{ 0 };
+		ci::vec4 color{ 1 };
 
-		Data() {}
+		Data() = default;
 		Data( const ci::vec2 &pt, const ci::vec4 &clr, float scale )
 			: position( pt )
 			, scale( scale )
+			, reserved( 0 )
 			, color( clr )
 		{
 		}
 	} Data;
 
+	ci::vec2          mOffset;
 	std::vector<Data> mControlPoints;
-
-	ci::gl::VboRef   mInstanceDataVbo;
-	ci::gl::BatchRef mInstancedBatch;
+	ci::gl::VboRef    mInstanceDataVbo;
+	ci::gl::BatchRef  mInstancedBatch;
 
 	//! Edit mode for all warps.
 	static std::atomic<bool> sIsEditMode;
@@ -321,15 +322,20 @@ class WarpBilinear : public Warp {
   public:
 	static WarpBilinearRef create( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() ) { return std::make_shared<WarpBilinear>( format ); }
 
-	WarpBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
-	virtual ~WarpBilinear() {}
+	explicit WarpBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
+	virtual ~WarpBilinear() = default;
+
+	WarpBilinear( const WarpBilinear & ) = delete;
+	WarpBilinear( WarpBilinear && ) = delete;
+	WarpBilinear &operator=( const WarpBilinear & ) = delete;
+	WarpBilinear &operator=( WarpBilinear && ) = delete;
 
 	//! Returns a shared pointer to this warp.
 	WarpBilinearRef getPtr() { return std::static_pointer_cast<WarpBilinear>( shared_from_this() ); }
 	//!
-	virtual ci::XmlTree toXml() const override;
+	ci::XmlTree toXml() const override;
 	//!
-	virtual void fromXml( const ci::XmlTree &xml ) override;
+	void fromXml( const ci::XmlTree &xml ) override;
 
 	//! Set the width and height of the content in pixels.
 	void setSize( float w, float h ) override
@@ -357,37 +363,37 @@ class WarpBilinear : public Warp {
 	};
 
 	//! Reset control points to undistorted image.
-	virtual void reset() override;
+	void reset() override;
 	//! Setup the warp before drawing its contents.
-	virtual void begin() override;
+	void begin() override;
 	//! Restore the warp after drawing.
-	virtual void end() override;
+	void end() override;
 
 	//! Draws a warped texture.
-	virtual void draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea, const ci::Rectf &destRect ) override;
+	void draw( const ci::gl::Texture2dRef &texture, const ci::Area &srcArea, const ci::Rectf &destRect ) override;
 
 	//! Set the number of horizontal control points for this warp.
-	void setNumControlX( int n );
+	void setNumControlX( size_t n );
 	//! Set the number of vertical control points for this warp.
-	void setNumControlY( int n );
+	void setNumControlY( size_t n );
 	//!
 	void setTexCoords( float x1, float y1, float x2, float y2 );
 
-	virtual void keyDown( ci::app::KeyEvent &event ) override;
+	void keyDown( ci::app::KeyEvent &event ) override;
 
   protected:
 	//! Draws the warp as a mesh, allowing you to use your own texture instead of the FBO.
-	virtual void draw( bool controls = true ) override;
-	//! Creates the shader that renders the content with a wireframe overlay.
+	void draw( bool controls = true ) override;
+	//! Creates the shader that renders the content with a wire frame overlay.
 	void createShader();
 	//! Creates the frame buffer object and updates the vertex buffer object if necessary.
 	void createBuffers();
 	//! Creates the vertex buffer object.
-	void createMesh( int resolutionX = 36, int resolutionY = 36 );
+	void createMesh( size_t resolutionX = 36, size_t resolutionY = 36 );
 	//! Updates the vertex buffer object based on the control points.
 	void updateMesh();
 	//!	Returns the specified control point. Values for col and row are clamped to prevent errors.
-	ci::vec2 getPoint( int col, int row ) const;
+	ci::vec2 getPoint( long col, long row ) const;
 	//!
 	ci::Rectf getMeshBounds() const;
 
@@ -396,7 +402,7 @@ class WarpBilinear : public Warp {
 
   private:
 	//! Greatest common divisor using Euclidian algorithm (from: http://en.wikipedia.org/wiki/Greatest_common_divisor)
-	inline int gcd( int a, int b ) const
+	static int gcd( int a, int b )
 	{
 		if( b == 0 )
 			return a;
@@ -426,28 +432,33 @@ class WarpBilinear : public Warp {
 	int mResolution;
 
 	//! Determines the number of horizontal and vertical quads.
-	int mResolutionX;
-	int mResolutionY;
+	size_t mResolutionX;
+	size_t mResolutionY;
 };
 
 // ----------------------------------------------------------------------------------------------------------------
 
 typedef std::shared_ptr<class WarpPerspective> WarpPerspectiveRef;
 
-class WarpPerspective : public Warp {
+class WarpPerspective final : public Warp {
   public:
 	//!
 	static WarpPerspectiveRef create() { return std::make_shared<WarpPerspective>(); }
 
-	WarpPerspective( void );
-	virtual ~WarpPerspective() {}
+	WarpPerspective();
+	virtual ~WarpPerspective() = default;
+
+	WarpPerspective( const WarpPerspective & ) = delete;
+	WarpPerspective( WarpPerspective && ) = delete;
+	WarpPerspective &operator=( const WarpPerspective & ) = delete;
+	WarpPerspective &operator=( WarpPerspective && ) = delete;
 
 	//! Returns a shared pointer to this warp.
 	WarpPerspectiveRef getPtr() { return std::static_pointer_cast<WarpPerspective>( shared_from_this() ); }
 	//! Get the transformation matrix.
 	ci::mat4 getTransform();
 	//! Get the inverted transformation matrix.
-	ci::mat4 getInvertedTransform() { return mInverted; }
+	ci::mat4 getInvertedTransform() const { return mInverted; }
 	//! Reset control points to undistorted image.
 	void reset() override;
 	//! Setup the warp before drawing its contents.
@@ -491,13 +502,18 @@ class WarpPerspective : public Warp {
 
 typedef std::shared_ptr<class WarpPerspectiveBilinear> WarpPerspectiveBilinearRef;
 
-class WarpPerspectiveBilinear : public WarpBilinear {
+class WarpPerspectiveBilinear final : public WarpBilinear {
   public:
 	//!
 	static WarpPerspectiveBilinearRef create( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() ) { return std::make_shared<WarpPerspectiveBilinear>( format ); }
 
-	WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
-	virtual ~WarpPerspectiveBilinear( void ) {}
+	explicit WarpPerspectiveBilinear( const ci::gl::Fbo::Format &format = ci::gl::Fbo::Format() );
+	virtual ~WarpPerspectiveBilinear() = default;
+
+	WarpPerspectiveBilinear( const WarpPerspectiveBilinear & ) = delete;
+	WarpPerspectiveBilinear( WarpPerspectiveBilinear && ) = delete;
+	WarpPerspectiveBilinear &operator=( const WarpPerspectiveBilinear & ) = delete;
+	WarpPerspectiveBilinear &operator=( WarpPerspectiveBilinear && ) = delete;
 
 	//! Returns a shared pointer to this warp.
 	WarpPerspectiveBilinearRef getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>( shared_from_this() ); }
@@ -539,5 +555,27 @@ class WarpPerspectiveBilinear : public WarpBilinear {
   protected:
 	WarpPerspectiveRef mWarp;
 };
-} // namespace warping
-} // namespace ph
+
+class ScopedWarp {
+	WarpRef mWarp;
+
+  public:
+	explicit ScopedWarp( WarpRef warp )
+		: mWarp( warp )
+	{
+		if( mWarp )
+			mWarp->begin();
+	}
+	~ScopedWarp()
+	{
+		if( mWarp )
+			mWarp->end();
+	}
+
+	ScopedWarp( const ScopedWarp & ) = delete;
+	ScopedWarp( ScopedWarp && ) = delete;
+	ScopedWarp &operator=( const ScopedWarp & ) = delete;
+	ScopedWarp &operator=( ScopedWarp && ) = delete;
+};
+
+} // namespace ph::warping

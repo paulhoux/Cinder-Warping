@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2019, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2020, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -20,19 +20,18 @@
 
 #include "Warp.h"
 
-#include "cinder/app/App.h"
-#include "cinder/gl/Context.h"
-#include "cinder/gl/Texture.h"
-#include "cinder/gl/gl.h"
+#include <cinder/app/App.h>
+#include <cinder/gl/Context.h>
+#include <cinder/gl/Texture.h>
+#include <cinder/gl/gl.h>
 
 using namespace ci;
 using namespace ci::app;
 
-namespace ph {
-namespace warping {
+namespace ph::warping {
 
 WarpPerspective::WarpPerspective()
-	: Warp( PERSPECTIVE )
+	: Warp( WarpType::PERSPECTIVE )
 {
 	//
 	mSource[0].x = 0.0f;
@@ -267,7 +266,7 @@ mat4 WarpPerspective::getPerspectiveTransform( const vec2 src[4], const vec2 dst
 }
 
 // Adapted from code found here: http://forum.openframeworks.cc/t/quad-warping-homography-without-opencv/3121/19
-void WarpPerspective::gaussianElimination( float *a, int n ) const
+void WarpPerspective::gaussianElimination( float *input, int n ) const
 {
 	int       i = 0;
 	int       j = 0;
@@ -276,28 +275,28 @@ void WarpPerspective::gaussianElimination( float *a, int n ) const
 	while( i < m && j < n ) {
 		int maxi = i;
 		for( int k = i + 1; k < m; ++k ) {
-			if( fabs( a[k * n + j] ) > fabs( a[maxi * n + j] ) ) {
+			if( fabs( input[k * n + j] ) > fabs( input[maxi * n + j] ) ) {
 				maxi = k;
 			}
 		}
 
-		if( a[maxi * n + j] != 0 ) {
+		if( input[maxi * n + j] != 0 ) {
 			if( i != maxi )
 				for( int k = 0; k < n; k++ ) {
-					const float aux = a[i * n + k];
-					a[i * n + k] = a[maxi * n + k];
-					a[maxi * n + k] = aux;
+					const float aux = input[i * n + k];
+					input[i * n + k] = input[maxi * n + k];
+					input[maxi * n + k] = aux;
 				}
 
-			const float a_ij = a[i * n + j];
+			const float a_ij = input[i * n + j];
 			for( int k = 0; k < n; k++ ) {
-				a[i * n + k] /= a_ij;
+				input[i * n + k] /= a_ij;
 			}
 
 			for( int u = i + 1; u < m; u++ ) {
-				const float a_uj = a[u * n + j];
+				const float a_uj = input[u * n + j];
 				for( int k = 0; k < n; k++ ) {
-					a[u * n + k] -= a_uj * a[i * n + k];
+					input[u * n + k] -= a_uj * input[i * n + k];
 				}
 			}
 
@@ -308,7 +307,7 @@ void WarpPerspective::gaussianElimination( float *a, int n ) const
 
 	for( i = m - 2; i >= 0; --i ) {
 		for( j = i + 1; j < n - 1; j++ ) {
-			a[i * n + m] -= a[i * n + j] * a[j * n + m];
+			input[i * n + m] -= input[i * n + j] * input[j * n + m];
 		}
 	}
 }
@@ -474,5 +473,5 @@ void WarpPerspective::createShader()
 		console() << e.what() << std::endl;
 	}
 }
-} // namespace warping
-} // namespace ph
+
+} // namespace ph::warping

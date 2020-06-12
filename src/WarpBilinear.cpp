@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2019, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2020, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -20,22 +20,21 @@
 
 #include "Warp.h"
 
-#include "cinder/Xml.h"
-#include "cinder/app/App.h"
-#include "cinder/gl/Context.h"
-#include "cinder/gl/Texture.h"
-#include "cinder/gl/scoped.h"
+#include <cinder/Xml.h>
+#include <cinder/app/App.h>
+#include <cinder/gl/Context.h>
+#include <cinder/gl/Texture.h>
+#include <cinder/gl/scoped.h>
 
 //
 
 using namespace ci;
 using namespace app;
 
-namespace ph {
-namespace warping {
+namespace ph::warping {
 
 WarpBilinear::WarpBilinear( const gl::Fbo::Format &format )
-	: Warp( BILINEAR )
+	: Warp( WarpType::BILINEAR )
 	, mFboFormat( format )
 	, mTarget( GL_TEXTURE_2D )
 	, mIsLinear( false )
@@ -75,10 +74,12 @@ void WarpBilinear::fromXml( const XmlTree &xml )
 
 void WarpBilinear::reset()
 {
+	const float dx = float( mControlsX ) - 1.0f;
+	const float dy = float( mControlsY ) - 1.0f;
 	mPoints.clear();
-	for( int x = 0; x < mControlsX; x++ ) {
-		for( int y = 0; y < mControlsY; y++ ) {
-			mPoints.push_back( vec2( x / float( mControlsX - 1 ), y / float( mControlsY - 1 ) ) );
+	for( size_t x = 0; x < mControlsX; x++ ) {
+		for( size_t y = 0; y < mControlsY; y++ ) {
+			mPoints.emplace_back( x / dx, y / dy );
 		}
 	}
 
@@ -189,7 +190,7 @@ void WarpBilinear::draw( bool controls )
 	}
 
 	// draw textured mesh
-	auto &             shader = ( mTarget == GL_TEXTURE_RECTANGLE ) ? mShader2DRect : mShader2D;
+	auto &             shader = mTarget == GL_TEXTURE_RECTANGLE ? mShader2DRect : mShader2D;
 	gl::ScopedGlslProg scpGlsl( shader );
 	shader->uniform( "uTex0", 0 );
 	shader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
@@ -201,7 +202,7 @@ void WarpBilinear::draw( bool controls )
 	shader->uniform( "uEditMode", isEditModeEnabled() );
 	shader->uniform( "uGammaMode", isEditModeEnabled() && isGammaModeEnabled() && mSelected < mPoints.size() );
 
-	auto &batch = ( mTarget == GL_TEXTURE_RECTANGLE ) ? mBatch2DRect : mBatch2D;
+	auto &batch = mTarget == GL_TEXTURE_RECTANGLE ? mBatch2DRect : mBatch2D;
 	batch->draw();
 
 	// draw edit interface
@@ -294,18 +295,18 @@ void WarpBilinear::keyDown( KeyEvent &event )
 		mIsAdaptive = !mIsAdaptive;
 		mIsDirty = true;
 		break;
-	case KeyEvent::KEY_F9:
-		// rotate content ccw
-		break;
-	case KeyEvent::KEY_F10:
-		// rotate content cw
-		break;
+	// case KeyEvent::KEY_F9:
+	//	// TODO: rotate content ccw
+	//	break;
+	// case KeyEvent::KEY_F10:
+	//	// TODO: rotate content cw
+	//	break;
 	case KeyEvent::KEY_F11: {
 		// flip control points horizontally
 		std::vector<vec2> points;
-		for( int x = mControlsX - 1; x >= 0; --x ) {
-			for( int y = 0; y < mControlsY; ++y ) {
-				const int i = ( x * mControlsY + y );
+		for( size_t x = mControlsX; x > 0; --x ) {
+			for( size_t y = 0; y < mControlsY; ++y ) {
+				const size_t i = ( x - 1 ) * mControlsY + y;
 				points.push_back( mPoints[i] );
 			}
 		}
@@ -317,9 +318,9 @@ void WarpBilinear::keyDown( KeyEvent &event )
 	case KeyEvent::KEY_F12: {
 		// flip control points vertically
 		std::vector<vec2> points;
-		for( int x = 0; x < mControlsX; ++x ) {
-			for( int y = mControlsY - 1; y >= 0; --y ) {
-				const int i = ( x * mControlsY + y );
+		for( size_t x = 0; x < mControlsX; ++x ) {
+			for( size_t y = mControlsY; y > 0; --y ) {
+				const size_t i = x * mControlsY + ( y - 1 );
 				points.push_back( mPoints[i] );
 			}
 		}
@@ -341,8 +342,8 @@ void WarpBilinear::createBuffers()
 		if( mIsAdaptive ) {
 			// determine a suitable mesh resolution based on width/height of the window
 			// and the size of the mesh in pixels
-			Rectf rect = getMeshBounds();
-			createMesh( int( rect.getWidth() / mResolution ), int( rect.getHeight() / mResolution ) );
+			const Rectf rect = getMeshBounds();
+			createMesh( int( rect.getWidth() / float( mResolution ) ), int( rect.getHeight() / float( mResolution ) ) );
 		}
 		else {
 			// use a fixed mesh resolution
@@ -352,29 +353,25 @@ void WarpBilinear::createBuffers()
 	}
 }
 
-void WarpBilinear::createMesh( int resolutionX, int resolutionY )
+void WarpBilinear::createMesh( size_t resolutionX, size_t resolutionY )
 {
-	// convert from number of quads to number of vertices
-	++resolutionX;
-	++resolutionY;
-
-	// find a value for resolutionX and resolutionY that can be
-	// evenly divided by mControlsX and mControlsY
-	if( mControlsX < resolutionX ) {
-		int dx = ( resolutionX - 1 ) % ( mControlsX - 1 );
-		if( dx >= ( mControlsX / 2 ) )
-			dx -= ( mControlsX - 1 );
-		resolutionX -= dx;
+	// Find a value for resolutionX and resolutionY that can be
+	// evenly divided by mControlsX and mControlsY.
+	if( mControlsX > 0 && mControlsX <= resolutionX ) {
+		size_t dx = resolutionX % ( mControlsX - 1 );
+		if( dx >= mControlsX / 2 )
+			dx -= mControlsX - 1;
+		resolutionX -= dx - 1;
 	}
 	else {
 		resolutionX = mControlsX;
 	}
 
-	if( mControlsY < resolutionY ) {
-		int dy = ( resolutionY - 1 ) % ( mControlsY - 1 );
-		if( dy >= ( mControlsY / 2 ) )
-			dy -= ( mControlsY - 1 );
-		resolutionY -= dy;
+	if( mControlsY > 0 && mControlsY <= resolutionY ) {
+		size_t dy = resolutionY % ( mControlsY - 1 );
+		if( dy >= mControlsY / 2 )
+			dy -= mControlsY - 1;
+		resolutionY -= dy - 1;
 	}
 	else {
 		resolutionY = mControlsY;
@@ -385,9 +382,9 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	mResolutionY = resolutionY;
 
 	//
-	const int numVertices = ( resolutionX * resolutionY );
-	const int numTriangles = 2 * ( resolutionX - 1 ) * ( resolutionY - 1 );
-	const int numIndices = numTriangles * 3;
+	const uint32_t numVertices = uint32_t( mResolutionX * mResolutionY );
+	const uint32_t numTriangles = uint32_t( 2 * ( mResolutionX - 1 ) * ( mResolutionY - 1 ) );
+	const uint32_t numIndices = numTriangles * 3;
 
 	//
 	gl::VboMesh::Layout layout;
@@ -409,17 +406,17 @@ void WarpBilinear::createMesh( int resolutionX, int resolutionY )
 	std::vector<uint32_t> indices( numIndices );
 	std::vector<vec2>     texCoords( numVertices );
 
-	for( int x = 0; x < resolutionX; ++x ) {
-		for( int y = 0; y < resolutionY; ++y ) {
+	for( size_t x = 0; x < mResolutionX; ++x ) {
+		for( size_t y = 0; y < mResolutionY; ++y ) {
 			// index
-			if( ( ( x + 1 ) < resolutionX ) && ( ( y + 1 ) < resolutionY ) ) {
-				indices[i++] = ( x + 0 ) * resolutionY + ( y + 0 );
-				indices[i++] = ( x + 1 ) * resolutionY + ( y + 0 );
-				indices[i++] = ( x + 1 ) * resolutionY + ( y + 1 );
+			if( x + 1 < resolutionX && y + 1 < resolutionY ) {
+				indices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 0 ) );
+				indices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 0 ) );
+				indices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 1 ) );
 
-				indices[i++] = ( x + 0 ) * resolutionY + ( y + 0 );
-				indices[i++] = ( x + 1 ) * resolutionY + ( y + 1 );
-				indices[i++] = ( x + 0 ) * resolutionY + ( y + 1 );
+				indices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 0 ) );
+				indices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 1 ) );
+				indices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 1 ) );
 			}
 			// texCoords
 			const float tx = x / float( resolutionX - 1 );
@@ -451,7 +448,7 @@ void WarpBilinear::updateMesh()
 
 	vec2  p;
 	float u, v;
-	int   col, row;
+	long  col, row;
 
 	std::vector<vec2> cols, rows;
 
@@ -462,19 +459,21 @@ void WarpBilinear::updateMesh()
 	int               index = 0;
 #endif
 
-	for( int x = 0; x < mResolutionX; ++x ) {
-		for( int y = 0; y < mResolutionY; ++y ) {
+	const float dx = float( mResolutionX ) - 1.0f;
+	const float dy = float( mResolutionY ) - 1.0f;
+	for( size_t x = 0; x < mResolutionX; ++x ) {
+		for( size_t y = 0; y < mResolutionY; ++y ) {
 			// transform coordinates to [0..numControls]
-			u = x * ( mControlsX - 1 ) / float( mResolutionX - 1 );
-			v = y * ( mControlsY - 1 ) / float( mResolutionY - 1 );
+			u = float( x * ( mControlsX - 1 ) ) / dx;
+			v = float( y * ( mControlsY - 1 ) ) / dy;
 
 			// determine col and row
-			col = int( u );
-			row = int( v );
+			col = long( u );
+			row = long( v );
 
 			// normalize coordinates to [0..1]
-			u -= col;
-			v -= row;
+			u -= floor( u );
+			v -= floor( v );
 
 			if( mIsLinear ) {
 				// perform linear interpolation
@@ -483,11 +482,11 @@ void WarpBilinear::updateMesh()
 				p = ( ( 1.0f - v ) * p1 + v * p2 ) * mWindowSize;
 			}
 			else {
-				// perform bicubic interpolation
+				// perform bi-cubic interpolation
 				rows.clear();
-				for( int i = -1; i < 3; ++i ) {
+				for( long i = -1; i < 3; ++i ) {
 					cols.clear();
-					for( int j = -1; j < 3; ++j ) {
+					for( long j = -1; j < 3; ++j ) {
 						cols.push_back( getPoint( col + i, row + j ) );
 					}
 					rows.push_back( cubicInterpolate( cols, v ) );
@@ -515,10 +514,10 @@ void WarpBilinear::updateMesh()
 	mIsDirty = false;
 }
 
-vec2 WarpBilinear::getPoint( int col, int row ) const
+vec2 WarpBilinear::getPoint( long col, long row ) const
 {
-	const int maxCol = mControlsX - 1;
-	const int maxRow = mControlsY - 1;
+	const long maxCol = long( mControlsX ) - 1;
+	const long maxRow = long( mControlsY ) - 1;
 
 	// here's the magic: extrapolate points beyond the edges
 	if( col < 0 )
@@ -531,7 +530,7 @@ vec2 WarpBilinear::getPoint( int col, int row ) const
 		return 2.0f * getPoint( col, maxRow ) - getPoint( col, 2 * maxRow - row );
 
 	// points on the edges or within the mesh can simply be looked up
-	return mPoints[( col * mControlsY ) + row];
+	return mPoints[col * mControlsY + row];
 }
 
 // from http://www.paulinternet.nl/?page=bicubic : fast catmull-rom calculation
@@ -542,24 +541,24 @@ vec2 WarpBilinear::cubicInterpolate( const std::vector<vec2> &knots, float t )
 	return knots[1] + 0.5f * t * ( knots[2] - knots[0] + t * ( 2.0f * knots[0] - 5.0f * knots[1] + 4.0f * knots[2] - knots[3] + t * ( 3.0f * ( knots[1] - knots[2] ) + knots[3] - knots[0] ) ) );
 }
 
-void WarpBilinear::setNumControlX( int n )
+void WarpBilinear::setNumControlX( size_t n )
 {
 	// there should be a minimum of 2 control points
-	n = math<int>::max( 2, n );
+	n = math<size_t>::max( 2, n );
 
 	// prevent overflow
-	if( ( n * mControlsY ) > MAX_NUM_CONTROL_POINTS )
+	if( n * mControlsY > MAX_NUM_CONTROL_POINTS )
 		return;
 
 	// create a list of new points
 	std::vector<vec2> temp( n * mControlsY );
 
 	// perform spline fitting
-	for( int row = 0; row < mControlsY; ++row ) {
+	for( long row = 0; row < long( mControlsY ); ++row ) {
 		std::vector<vec2> points;
 		if( mIsLinear ) {
 			// construct piece-wise linear spline
-			for( int col = 0; col < mControlsX; ++col ) {
+			for( long col = 0; col < long( mControlsX ); ++col ) {
 				points.push_back( getPoint( col, row ) );
 			}
 
@@ -567,14 +566,14 @@ void WarpBilinear::setNumControlX( int n )
 
 			// calculate position of new control points
 			float length = s.getLength( 0.0f, 1.0f );
-			float step = 1.0f / ( n - 1 );
-			for( int col = 0; col < n; ++col ) {
-				temp[( col * mControlsY ) + row] = s.getPosition( s.getTime( length * col * step ) );
+			float step = 1.0f / ( float( n ) - 1.0f );
+			for( size_t col = 0; col < n; ++col ) {
+				temp[col * mControlsY + row] = s.getPosition( s.getTime( length * col * step ) );
 			}
 		}
 		else {
 			// construct piece-wise catmull-rom spline
-			for( int col = 0; col < mControlsX; ++col ) {
+			for( long col = 0; col < long( mControlsX ); ++col ) {
 				vec2 p0 = getPoint( col - 1, row );
 				vec2 p1 = getPoint( col, row );
 				vec2 p2 = getPoint( col + 1, row );
@@ -586,7 +585,7 @@ void WarpBilinear::setNumControlX( int n )
 
 				points.push_back( p1 );
 
-				if( col < ( mControlsX - 1 ) ) {
+				if( col < long( mControlsX ) - 1 ) {
 					points.push_back( b1 );
 					points.push_back( b2 );
 				}
@@ -596,9 +595,9 @@ void WarpBilinear::setNumControlX( int n )
 
 			// calculate position of new control points
 			float length = s.getLength( 0.0f, 1.0f );
-			float step = 1.0f / ( n - 1 );
-			for( int col = 0; col < n; ++col ) {
-				temp[( col * mControlsY ) + row] = s.getPosition( s.getTime( length * col * step ) );
+			float step = 1.0f / ( float( n ) - 1 );
+			for( size_t col = 0; col < n; ++col ) {
+				temp[col * mControlsY + row] = s.getPosition( s.getTime( length * col * step ) );
 			}
 		}
 	}
@@ -610,38 +609,38 @@ void WarpBilinear::setNumControlX( int n )
 	mIsDirty = true;
 }
 
-void WarpBilinear::setNumControlY( int n )
+void WarpBilinear::setNumControlY( size_t n )
 {
 	// there should be a minimum of 2 control points
-	n = math<int>::max( 2, n );
+	n = math<size_t>::max( 2, n );
 
 	// prevent overflow
-	if( ( mControlsX * n ) > MAX_NUM_CONTROL_POINTS )
+	if( mControlsX * n > MAX_NUM_CONTROL_POINTS )
 		return;
 
 	// create a list of new points
 	std::vector<vec2> temp( mControlsX * n );
 
 	// perform spline fitting
-	for( int col = 0; col < mControlsX; ++col ) {
+	for( long col = 0; col < long( mControlsX ); ++col ) {
 		std::vector<vec2> points;
 		if( mIsLinear ) {
 			// construct piece-wise linear spline
-			for( int row = 0; row < mControlsY; ++row )
+			for( long row = 0; row < long( mControlsY ); ++row )
 				points.push_back( getPoint( col, row ) );
 
 			BSpline2f s( points, 1, false, true );
 
 			// calculate position of new control points
 			float length = s.getLength( 0.0f, 1.0f );
-			float step = 1.0f / ( n - 1 );
-			for( int row = 0; row < n; ++row ) {
-				temp[( col * n ) + row] = s.getPosition( s.getTime( length * row * step ) );
+			float step = 1.0f / ( float( n ) - 1 );
+			for( size_t row = 0; row < n; ++row ) {
+				temp[col * n + row] = s.getPosition( s.getTime( length * row * step ) );
 			}
 		}
 		else {
 			// construct piece-wise catmull-rom spline
-			for( int row = 0; row < mControlsY; ++row ) {
+			for( long row = 0; row < long( mControlsY ); ++row ) {
 				vec2 p0 = getPoint( col, row - 1 );
 				vec2 p1 = getPoint( col, row );
 				vec2 p2 = getPoint( col, row + 1 );
@@ -653,7 +652,7 @@ void WarpBilinear::setNumControlY( int n )
 
 				points.push_back( p1 );
 
-				if( row < ( mControlsY - 1 ) ) {
+				if( row < long( mControlsY ) - 1 ) {
 					points.push_back( b1 );
 					points.push_back( b2 );
 				}
@@ -663,9 +662,9 @@ void WarpBilinear::setNumControlY( int n )
 
 			// calculate position of new control points
 			float length = s.getLength( 0.0f, 1.0f );
-			float step = 1.0f / ( n - 1 );
-			for( int row = 0; row < n; ++row ) {
-				temp[( col * n ) + row] = s.getPosition( s.getTime( length * row * step ) );
+			float step = 1.0f / ( float( n ) - 1.0f );
+			for( size_t row = 0; row < n; ++row ) {
+				temp[col * n + row] = s.getPosition( s.getTime( length * row * step ) );
 			}
 		}
 	}
@@ -868,11 +867,11 @@ Rectf WarpBilinear::getMeshBounds() const
 	vec2 min = vec2( 1 );
 	vec2 max = vec2( 0 );
 
-	for( unsigned i = 0; i < mPoints.size(); ++i ) {
-		min.x = math<float>::min( mPoints[i].x, min.x );
-		min.y = math<float>::min( mPoints[i].y, min.y );
-		max.x = math<float>::max( mPoints[i].x, max.x );
-		max.y = math<float>::max( mPoints[i].y, min.y );
+	for( const auto &point : mPoints ) {
+		min.x = math<float>::min( point.x, min.x );
+		min.y = math<float>::min( point.y, min.y );
+		max.x = math<float>::max( point.x, max.x );
+		max.y = math<float>::max( point.y, min.y );
 	}
 
 	return Rectf( min * mWindowSize, max * mWindowSize );
@@ -885,5 +884,5 @@ void WarpBilinear::setTexCoords( float x1, float y1, float x2, float y2 )
 	mX2 = x2;
 	mY2 = y2;
 }
-} // namespace warping
-} // namespace ph
+
+} // namespace ph::warping
