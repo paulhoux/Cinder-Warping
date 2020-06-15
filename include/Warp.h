@@ -61,6 +61,7 @@ typedef WarpList::const_reverse_iterator WarpConstReverseIter;
 class Warp : public std::enable_shared_from_this<Warp> {
   public:
 	enum class WarpType { UNKNOWN, BILINEAR, PERSPECTIVE, PERSPECTIVE_BILINEAR };
+	enum class PrimitiveType { TRIANGLES, TRIANGLE_STRIP };
 
 	explicit Warp( WarpType type = WarpType::UNKNOWN );
 	virtual ~Warp() = default;
@@ -101,6 +102,12 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	WarpType getType() const { return mType; };
 	//! Returns a shared pointer to this warp.
 	WarpRef getPtr() { return shared_from_this(); }
+
+	//! Returns the primitive type of the warp mesh.
+	virtual PrimitiveType getPrimitiveType() const { return PrimitiveType::TRIANGLES; }
+	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
+	virtual std::vector<float> getWarpMesh( float x, float y, float w, float h ) = 0;
+
 	//!
 	virtual ci::XmlTree toXml() const;
 	//!
@@ -332,6 +339,12 @@ class WarpBilinear : public Warp {
 
 	//! Returns a shared pointer to this warp.
 	WarpBilinearRef getPtr() { return std::static_pointer_cast<WarpBilinear>( shared_from_this() ); }
+
+	//! Returns the primitive type of the warp mesh.
+	PrimitiveType getPrimitiveType() const override { return PrimitiveType::TRIANGLES; }
+	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
+	std::vector<float> getWarpMesh( float x, float y, float w, float h ) override;
+
 	//!
 	ci::XmlTree toXml() const override;
 	//!
@@ -434,6 +447,11 @@ class WarpBilinear : public Warp {
 	//! Determines the number of horizontal and vertical quads.
 	size_t mResolutionX;
 	size_t mResolutionY;
+
+	//!
+	std::vector<ci::vec2> mPositions;
+	std::vector<uint32_t> mIndices;
+	std::vector<ci::vec2> mTexCoords;
 };
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -455,6 +473,12 @@ class WarpPerspective final : public Warp {
 
 	//! Returns a shared pointer to this warp.
 	WarpPerspectiveRef getPtr() { return std::static_pointer_cast<WarpPerspective>( shared_from_this() ); }
+
+	//! Returns the primitive type of the warp mesh.
+	PrimitiveType getPrimitiveType() const override { return PrimitiveType::TRIANGLES; }
+	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
+	std::vector<float> getWarpMesh( float x, float y, float w, float h ) override { return std::vector<float>(); }
+
 	//! Get the transformation matrix.
 	ci::mat4 getTransform();
 	//! Get the inverted transformation matrix.
@@ -517,6 +541,12 @@ class WarpPerspectiveBilinear final : public WarpBilinear {
 
 	//! Returns a shared pointer to this warp.
 	WarpPerspectiveBilinearRef getPtr() { return std::static_pointer_cast<WarpPerspectiveBilinear>( shared_from_this() ); }
+
+	//! Returns the primitive type of the warp mesh.
+	PrimitiveType getPrimitiveType() const override { return PrimitiveType::TRIANGLES; }
+	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
+	std::vector<float> getWarpMesh( float x, float y, float w, float h ) override { return std::vector<float>(); }
+
 	//!
 	ci::XmlTree toXml() const override;
 	//!

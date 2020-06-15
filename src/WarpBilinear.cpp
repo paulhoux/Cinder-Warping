@@ -50,6 +50,28 @@ WarpBilinear::WarpBilinear( const gl::Fbo::Format &format )
 	WarpBilinear::reset();
 }
 
+std::vector<float> WarpBilinear::getWarpMesh( float x, float y, float w, float h )
+{
+	createShader();
+	createBuffers();
+
+	std::vector<float> vertices;
+	vertices.reserve( mIndices.size() * 6 );
+
+	for( const auto index : mIndices ) {
+		const auto &v = mPositions[index];
+		const auto &t = mTexCoords[index];
+		vertices.emplace_back( v.x );
+		vertices.emplace_back( v.y );
+		vertices.emplace_back( glm::mix( x, x + w, t.x ) );
+		vertices.emplace_back( glm::mix( y, y + h, t.y ) );
+		vertices.emplace_back( 1.0f );
+		vertices.emplace_back( 1.0f );
+	}
+
+	return vertices;
+}
+
 XmlTree WarpBilinear::toXml() const
 {
 	XmlTree xml = Warp::toXml();
@@ -389,7 +411,7 @@ void WarpBilinear::createMesh( size_t resolutionX, size_t resolutionY )
 	//
 	gl::VboMesh::Layout layout;
 	layout.interleave( false );
-	layout.attrib( geom::POSITION, 3 );
+	layout.attrib( geom::POSITION, 2 );
 	layout.attrib( geom::TEX_COORD_0, 2 );
 	layout.usage( GL_STATIC_DRAW );
 
@@ -399,43 +421,40 @@ void WarpBilinear::createMesh( size_t resolutionX, size_t resolutionY )
 		return;
 
 	// buffer static data
+	mIndices.resize( numIndices );
+	mPositions.resize( numVertices );
+	mTexCoords.resize( numVertices );
+
 	int i = 0;
 	int j = 0;
-
-	std::vector<vec3>     positions;
-	std::vector<uint32_t> indices( numIndices );
-	std::vector<vec2>     texCoords( numVertices );
 
 	for( size_t x = 0; x < mResolutionX; ++x ) {
 		for( size_t y = 0; y < mResolutionY; ++y ) {
 			// index
 			if( x + 1 < resolutionX && y + 1 < resolutionY ) {
-				indices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 0 ) );
-				indices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 0 ) );
-				indices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 1 ) );
+				mIndices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 0 ) );
+				mIndices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 0 ) );
+				mIndices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 1 ) );
 
-				indices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 0 ) );
-				indices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 1 ) );
-				indices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 1 ) );
+				mIndices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 0 ) );
+				mIndices[i++] = uint32_t( ( x + 1 ) * resolutionY + ( y + 1 ) );
+				mIndices[i++] = uint32_t( ( x + 0 ) * resolutionY + ( y + 1 ) );
 			}
 			// texCoords
 			const float tx = x / float( resolutionX - 1 );
 			const float ty = y / float( resolutionY - 1 );
-			texCoords[j++] = vec2( tx, ty );
+			mTexCoords[j++] = vec2( tx, ty );
 		}
 	}
 
-	positions.resize( mResolutionX * mResolutionY );
-	mVboMesh->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
-	mVboMesh->bufferAttrib( geom::TEX_COORD_0, texCoords.size() * sizeof( vec2 ), texCoords.data() );
-	mVboMesh->bufferIndices( indices.size() * sizeof( uint32_t ), indices.data() );
+	mPositions.resize( numVertices );
+	mVboMesh->bufferAttrib( geom::POSITION, mPositions.size() * sizeof( vec2 ), mPositions.data() );
+	mVboMesh->bufferAttrib( geom::TEX_COORD_0, mTexCoords.size() * sizeof( vec2 ), mTexCoords.data() );
+	mVboMesh->bufferIndices( mIndices.size() * sizeof( uint32_t ), mIndices.data() );
 
 	//
 	mIsDirty = true;
 }
-
-// Mapped buffer seems to be a *tiny* bit faster.
-#define USE_MAPPED_BUFFER 1
 
 void WarpBilinear::updateMesh()
 {
@@ -452,13 +471,9 @@ void WarpBilinear::updateMesh()
 
 	std::vector<vec2> cols, rows;
 
-#if USE_MAPPED_BUFFER
-	auto mappedMesh = mVboMesh->mapAttrib3f( geom::POSITION, false );
-#else
-	std::vector<vec3> positions( mResolutionX * mResolutionY );
-	int               index = 0;
-#endif
+	mPositions.resize( mResolutionX * mResolutionY );
 
+	int         index = 0;
 	const float dx = float( mResolutionX ) - 1.0f;
 	const float dy = float( mResolutionY ) - 1.0f;
 	for( size_t x = 0; x < mResolutionX; ++x ) {
@@ -494,19 +509,11 @@ void WarpBilinear::updateMesh()
 				p = cubicInterpolate( rows, u ) * mWindowSize;
 			}
 
-#if USE_MAPPED_BUFFER
-			*mappedMesh++ = vec3( p.x, p.y, 0 );
-#else
-            positions[index++] = vec3( p.x, p.y, 0 );
-#endif
+			mPositions[index++] = p;
 		}
 	}
 
-#if USE_MAPPED_BUFFER
-	mappedMesh.unmap();
-#else
-	mVboMesh->bufferAttrib( geom::POSITION, positions.size() * sizeof( vec3 ), positions.data() );
-#endif
+	mVboMesh->bufferAttrib( geom::POSITION, mPositions.size() * sizeof( vec2 ), mPositions.data() );
 
 	mBatch2D = gl::Batch::create( mVboMesh, mShader2D );
 	mBatch2DRect = gl::Batch::create( mVboMesh, mShader2DRect );
