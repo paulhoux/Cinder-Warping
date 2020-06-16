@@ -50,7 +50,7 @@ WarpBilinear::WarpBilinear( const gl::Fbo::Format &format )
 	WarpBilinear::reset();
 }
 
-std::vector<float> WarpBilinear::getWarpMesh( float x, float y, float w, float h )
+std::vector<float> WarpBilinear::getWarpMesh( const ci::Rectf &srcRect )
 {
 	createShader();
 	createBuffers();
@@ -63,9 +63,9 @@ std::vector<float> WarpBilinear::getWarpMesh( float x, float y, float w, float h
 		const auto &t = mTexCoords[index];
 		vertices.emplace_back( v.x );
 		vertices.emplace_back( v.y );
-		vertices.emplace_back( glm::mix( x, x + w, t.x ) );
-		vertices.emplace_back( glm::mix( y, y + h, t.y ) );
-		vertices.emplace_back( 1.0f );
+		vertices.emplace_back( glm::mix( srcRect.x1, srcRect.x2, t.x ) );
+		vertices.emplace_back( glm::mix( srcRect.y1, srcRect.y2, t.y ) );
+		vertices.emplace_back( 0.0f );
 		vertices.emplace_back( 1.0f );
 	}
 
@@ -184,7 +184,7 @@ void WarpBilinear::end()
 	srcArea.y1 = srcArea.y2;
 	srcArea.y2 = t;
 
-	draw( mFbo->getColorTexture(), srcArea, Rectf( getBounds() ) );
+	draw( mFbo->getColorTexture(), srcArea, getBounds() );
 }
 
 void WarpBilinear::draw( bool controls )
@@ -212,7 +212,8 @@ void WarpBilinear::draw( bool controls )
 	}
 
 	// draw textured mesh
-	auto &             shader = mTarget == GL_TEXTURE_RECTANGLE ? mShader2DRect : mShader2D;
+	auto &shader = mTarget == GL_TEXTURE_RECTANGLE ? mShader2DRect : mShader2D;
+
 	gl::ScopedGlslProg scpGlsl( shader );
 	shader->uniform( "uTex0", 0 );
 	shader->uniform( "uExtends", vec4( mWidth, mHeight, mWidth / float( mControlsX - 1 ), mHeight / float( mControlsY - 1 ) ) );
@@ -229,6 +230,13 @@ void WarpBilinear::draw( bool controls )
 
 	// draw edit interface
 	if( isEditModeEnabled() && controls && mSelected < mPoints.size() ) {
+		// draw mesh
+		gl::ScopedColor scpColor( 0, 1, 1 );
+		gl::begin( GL_POINTS );
+		for( const auto &p : mPositions )
+			gl::vertex( p );
+		gl::end();
+
 		// draw control points
 		for( unsigned i = 0; i < mPoints.size(); i++ )
 			queueControlPoint( getControlPoint( i ) * mWindowSize, i == mSelected );
@@ -465,7 +473,6 @@ void WarpBilinear::updateMesh()
 	if( !mIsDirty )
 		return;
 
-	vec2  p;
 	float u, v;
 	long  col, row;
 
@@ -494,7 +501,7 @@ void WarpBilinear::updateMesh()
 				// perform linear interpolation
 				vec2 p1 = ( 1.0f - u ) * getPoint( col, row ) + u * getPoint( col + 1, row );
 				vec2 p2 = ( 1.0f - u ) * getPoint( col, row + 1 ) + u * getPoint( col + 1, row + 1 );
-				p = ( ( 1.0f - v ) * p1 + v * p2 ) * mWindowSize;
+				mPositions[index++] = ( ( 1.0f - v ) * p1 + v * p2 ) * mWindowSize;
 			}
 			else {
 				// perform bi-cubic interpolation
@@ -506,10 +513,8 @@ void WarpBilinear::updateMesh()
 					}
 					rows.push_back( cubicInterpolate( cols, v ) );
 				}
-				p = cubicInterpolate( rows, u ) * mWindowSize;
+				mPositions[index++] = cubicInterpolate( rows, u ) * mWindowSize;
 			}
-
-			mPositions[index++] = p;
 		}
 	}
 

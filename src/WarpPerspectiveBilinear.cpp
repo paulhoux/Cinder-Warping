@@ -181,12 +181,13 @@ void WarpPerspectiveBilinear::resize()
 	WarpBilinear::resize();
 }
 
-void WarpPerspectiveBilinear::setSize( float w, float h )
+bool WarpPerspectiveBilinear::setSize( float w, float h )
 {
 	// make content size compatible with WarpBilinear's mWindowSize
-	mWarp->setSize( mWindowSize );
+	bool changed = mWarp->setSize( mWindowSize );
+	changed |= WarpBilinear::setSize( w, h );
 
-	WarpBilinear::setSize( w, h );
+	return changed;
 }
 
 vec2 WarpPerspectiveBilinear::getControlPoint( unsigned index ) const

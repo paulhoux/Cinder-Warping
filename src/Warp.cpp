@@ -49,7 +49,7 @@ Warp::Warp( WarpType type )
 	, mExponent( 2.0f )
 	, mSelectedTime( 0 )
 {
-	mWindowSize = vec2( float( mWidth ), float( mHeight ) );
+	mWindowSize = vec2( mWidth, mHeight );
 }
 
 void Warp::draw( const gl::Texture2dRef &texture )
@@ -229,12 +229,16 @@ void Warp::fromXml( const XmlTree &xml )
 	mIsDirty = true;
 }
 
-void Warp::setSize( float w, float h )
+bool Warp::setSize( float w, float h )
 {
+	bool changed = ( mWidth != w || mHeight != h );
+
 	mWidth = w;
 	mHeight = h;
+	mWindowSize = vec2( w, h );
+	mIsDirty |= changed;
 
-	mIsDirty = true;
+	return changed;
 }
 
 vec2 Warp::getControlPoint( unsigned index ) const

@@ -106,7 +106,7 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	//! Returns the primitive type of the warp mesh.
 	virtual PrimitiveType getPrimitiveType() const { return PrimitiveType::TRIANGLES; }
 	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
-	virtual std::vector<float> getWarpMesh( float x, float y, float w, float h ) = 0;
+	virtual std::vector<float> getWarpMesh( const ci::Rectf &srcRect ) = 0;
 
 	//!
 	virtual ci::XmlTree toXml() const;
@@ -125,10 +125,10 @@ class Warp : public std::enable_shared_from_this<Warp> {
 	virtual void setWidth( float w ) { setSize( w, mHeight ); }
 	//! Set the height of the content in pixels.
 	virtual void setHeight( float h ) { setSize( mWidth, h ); }
-	//! Set the width and height of the content in pixels.
-	virtual void setSize( const ci::vec2 &size ) { setSize( size.x, size.y ); }
-	//! Set the width and height of the content in pixels.
-	virtual void setSize( float w, float h );
+	//! Set the width and height of the content in pixels. Returns whether the size was changed.
+	virtual bool setSize( const ci::vec2 &size ) { return setSize( size.x, size.y ); }
+	//! Set the width and height of the content in pixels. Returns whether the size was changed.
+	virtual bool setSize( float w, float h );
 
 	//! Returns the luminance value for the red, green and blue channels, used for edge blending (0.5 = linear).
 	virtual const ci::vec3 &getLuminance() const { return mLuminance; }
@@ -343,7 +343,7 @@ class WarpBilinear : public Warp {
 	//! Returns the primitive type of the warp mesh.
 	PrimitiveType getPrimitiveType() const override { return PrimitiveType::TRIANGLES; }
 	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
-	std::vector<float> getWarpMesh( float x, float y, float w, float h ) override;
+	std::vector<float> getWarpMesh( const ci::Rectf &srcRect ) override;
 
 	//!
 	ci::XmlTree toXml() const override;
@@ -351,10 +351,14 @@ class WarpBilinear : public Warp {
 	void fromXml( const ci::XmlTree &xml ) override;
 
 	//! Set the width and height of the content in pixels.
-	void setSize( float w, float h ) override
+	bool setSize( float w, float h ) override
 	{
-		Warp::setSize( w, h );
-		mFbo.reset();
+		if( Warp::setSize( w, h ) ) {
+			mFbo.reset();
+			return true;
+		}
+
+		return false;
 	}
 	//! Set the frame buffer format, so you have control over its quality settings.
 	void setFormat( const ci::gl::Fbo::Format &format )
@@ -477,7 +481,7 @@ class WarpPerspective final : public Warp {
 	//! Returns the primitive type of the warp mesh.
 	PrimitiveType getPrimitiveType() const override { return PrimitiveType::TRIANGLES; }
 	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
-	std::vector<float> getWarpMesh( float x, float y, float w, float h ) override { return std::vector<float>(); }
+	std::vector<float> getWarpMesh( const ci::Rectf &srcRect ) override { return std::vector<float>(); }
 
 	//! Get the transformation matrix.
 	ci::mat4 getTransform();
@@ -545,7 +549,7 @@ class WarpPerspectiveBilinear final : public WarpBilinear {
 	//! Returns the primitive type of the warp mesh.
 	PrimitiveType getPrimitiveType() const override { return PrimitiveType::TRIANGLES; }
 	//! Returns raw mesh data. For each vertex there is an X, Y, U, V, R and Q coordinate.
-	std::vector<float> getWarpMesh( float x, float y, float w, float h ) override { return std::vector<float>(); }
+	std::vector<float> getWarpMesh( const ci::Rectf &srcRect ) override { return std::vector<float>(); }
 
 	//!
 	ci::XmlTree toXml() const override;
@@ -560,7 +564,7 @@ class WarpPerspectiveBilinear final : public WarpBilinear {
 	void resize() override;
 
 	//! Set the width and height of the content in pixels.
-	void setSize( float w, float h ) override;
+	bool setSize( float w, float h ) override;
 
 	//! Returns the coordinates of the specified control point.
 	ci::vec2 getControlPoint( unsigned index ) const override;
