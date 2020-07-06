@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010-2019, Paul Houx - All rights reserved.
+ Copyright (c) 2010-2020, Paul Houx - All rights reserved.
  This code is intended for use with the Cinder C++ library: http://libcinder.org
 
  This file is part of Cinder-Warping.
@@ -20,17 +20,16 @@
 
 #include "Warp.h"
 
-#include "cinder/Xml.h"
-#include "cinder/app/App.h"
-#include "cinder/gl/Texture.h"
-#include "cinder/gl/draw.h"
-#include "cinder/gl/scoped.h"
+#include <cinder/Xml.h>
+#include <cinder/app/App.h>
+#include <cinder/gl/Texture.h>
+#include <cinder/gl/draw.h>
+#include <cinder/gl/scoped.h>
 
 using namespace ci;
 using namespace ci::app;
 
-namespace ph {
-namespace warping {
+namespace ph::warping {
 
 std::atomic<bool> Warp::sIsEditMode{ false };
 std::atomic<bool> Warp::sIsGammaMode{ false };
@@ -50,7 +49,7 @@ Warp::Warp( WarpType type )
 	, mExponent( 2.0f )
 	, mSelectedTime( 0 )
 {
-	mWindowSize = vec2( float( mWidth ), float( mHeight ) );
+	mWindowSize = vec2( mWidth, mHeight );
 }
 
 void Warp::draw( const gl::Texture2dRef &texture )
@@ -124,13 +123,13 @@ XmlTree Warp::toXml() const
 	XmlTree xml;
 	xml.setTag( "warp" );
 	switch( mType ) {
-	case BILINEAR:
+	case WarpType::BILINEAR:
 		xml.setAttribute( "method", "bilinear" );
 		break;
-	case PERSPECTIVE:
+	case WarpType::PERSPECTIVE:
 		xml.setAttribute( "method", "perspective" );
 		break;
-	case PERSPECTIVE_BILINEAR:
+	case WarpType::PERSPECTIVE_BILINEAR:
 		xml.setAttribute( "method", "perspective-bilinear" );
 		break;
 	default:
@@ -230,12 +229,16 @@ void Warp::fromXml( const XmlTree &xml )
 	mIsDirty = true;
 }
 
-void Warp::setSize( float w, float h )
+bool Warp::setSize( float w, float h )
 {
+	bool changed = ( mWidth != w || mHeight != h );
+
 	mWidth = w;
 	mHeight = h;
+	mWindowSize = vec2( w, h );
+	mIsDirty |= changed;
 
-	mIsDirty = true;
+	return changed;
 }
 
 vec2 Warp::getControlPoint( unsigned index ) const
@@ -360,7 +363,7 @@ WarpList Warp::readSettings( const DataSourceRef &source )
 			XmlTree warpXml = child->getChild( "warp" );
 
 			// create warp of the correct type
-			std::string method = warpXml.getAttributeValue<std::string>( "method", "unknown" );
+			auto method = warpXml.getAttributeValue<std::string>( "method", "unknown" );
 			if( method == "bilinear" ) {
 				WarpBilinearRef warp( new WarpBilinear() );
 				warp->fromXml( warpXml );
@@ -780,8 +783,8 @@ void Warp::drawControlPoints()
 	if( mInstancedBatch && !mControlPoints.empty() ) {
 		// update instance data buffer
 		auto ptr = static_cast<Data *>( mInstanceDataVbo->mapReplace() );
-		for( const auto &mControlPoint : mControlPoints )
-			*ptr++ = mControlPoint;
+		for( const auto &controlPoint : mControlPoints )
+			*ptr++ = controlPoint;
 		mInstanceDataVbo->unmap();
 
 		// draw instanced
@@ -791,5 +794,4 @@ void Warp::drawControlPoints()
 	mControlPoints.clear();
 }
 
-} // namespace warping
-} // namespace ph
+} // namespace ph::warping

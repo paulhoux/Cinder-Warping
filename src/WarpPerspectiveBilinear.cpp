@@ -26,14 +26,13 @@
 using namespace ci;
 using namespace app;
 
-namespace ph {
-namespace warping {
+namespace ph::warping {
 
 WarpPerspectiveBilinear::WarpPerspectiveBilinear( const gl::Fbo::Format &format )
 	: WarpBilinear( format )
 {
 	// change type
-	mType = PERSPECTIVE_BILINEAR;
+	mType = WarpType::PERSPECTIVE_BILINEAR;
 
 	// create perspective warp
 	mWarp = std::make_shared<WarpPerspective>();
@@ -65,8 +64,8 @@ void WarpPerspectiveBilinear::fromXml( const XmlTree &xml )
 	// get corners
 	unsigned i = 0;
 	for( XmlTree::ConstIter child = xml.begin( "corner" ); child != xml.end(); ++child ) {
-		const float x = child->getAttributeValue<float>( "x", 0.0f );
-		const float y = child->getAttributeValue<float>( "y", 0.0f );
+		const auto x = child->getAttributeValue<float>( "x", 0.0f );
+		const auto y = child->getAttributeValue<float>( "y", 0.0f );
 
 		mWarp->setControlPoint( i, vec2( x, y ) );
 
@@ -182,12 +181,13 @@ void WarpPerspectiveBilinear::resize()
 	WarpBilinear::resize();
 }
 
-void WarpPerspectiveBilinear::setSize( float w, float h )
+bool WarpPerspectiveBilinear::setSize( float w, float h )
 {
 	// make content size compatible with WarpBilinear's mWindowSize
-	mWarp->setSize( mWindowSize );
+	bool changed = mWarp->setSize( mWindowSize );
+	changed |= WarpBilinear::setSize( w, h );
 
-	WarpBilinear::setSize( w, h );
+	return changed;
 }
 
 vec2 WarpPerspectiveBilinear::getControlPoint( unsigned index ) const
@@ -287,5 +287,4 @@ unsigned WarpPerspectiveBilinear::convertIndex( unsigned index ) const
 	else
 		return index;
 }
-} // namespace warping
-} // namespace ph
+} // namespace ph::warping
