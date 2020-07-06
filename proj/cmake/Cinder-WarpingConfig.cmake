@@ -13,8 +13,6 @@ if ( NOT TARGET Cinder-Warping )
 
 	add_library( Cinder-Warping ${CINDER_WARPING_SOURCES} )
 
-	target_compile_options( Cinder-Warping PUBLIC "-std=c++11" )
-
 	target_include_directories( Cinder-Warping PUBLIC "${CINDER_WARPING_INCLUDES}" )
 	target_include_directories( Cinder-Warping SYSTEM BEFORE PUBLIC "${CINDER_PATH}/include" )
 
